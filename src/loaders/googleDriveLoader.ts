@@ -3,10 +3,16 @@ import { google } from 'googleapis';
 
 export interface GoogleDriveLoaderOptions {
   folderId?: string;
+  serviceAccountEmail?: string;
+  clientEmail?: string;
+  privateKey?: string;
 }
 
 export function googleDriveLoader(options: GoogleDriveLoaderOptions = {}): Loader {
   const folderId = options.folderId || process.env.GOOGLE_DRIVE_FOLDER_ID;
+  const clientEmail = options.serviceAccountEmail || options.clientEmail || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const rawPrivateKey = options.privateKey || process.env.GOOGLE_PRIVATE_KEY;
+  const privateKey = rawPrivateKey?.replace(/\\n/g, '\n');
 
   return {
     name: 'google-drive-loader',
@@ -15,9 +21,6 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions = {}): Loade
         logger.error('Google Drive Folder ID is missing.');
         return;
       }
-
-      const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-      const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
       if (!clientEmail || !privateKey) {
         logger.error('Google Service Account credentials (email or private key) are missing.');

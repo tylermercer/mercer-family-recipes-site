@@ -117,6 +117,47 @@ describe('googleDriveLoader', () => {
     expect(mockLogger.error).toHaveBeenCalledWith('Google Service Account credentials (email or private key) are missing.');
   });
 
+  it('allows passing folderId, serviceAccountEmail, and privateKey via loader options', async () => {
+    delete process.env.GOOGLE_DRIVE_FOLDER_ID;
+    delete process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+    delete process.env.GOOGLE_PRIVATE_KEY;
+
+    mockList.mockResolvedValue({ data: { files: [] } });
+
+    const loader = googleDriveLoader({
+      folderId: 'opt-folder',
+      serviceAccountEmail: 'opt-email@test.com',
+      privateKey: '-----BEGIN PRIVATE KEY-----\\nopt-key\\n-----END PRIVATE KEY-----',
+    });
+
+    const mockLogger = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      fork: vi.fn(),
+    };
+
+    const mockStore = {
+      clear: vi.fn(),
+      set: vi.fn(),
+    };
+
+    await loader.load({
+      store: mockStore as any,
+      logger: mockLogger as any,
+      parseData: vi.fn(),
+      meta: {} as any,
+      generateDigest: vi.fn() as any,
+      config: {} as any,
+      cache: {} as any,
+      watcher: {} as any,
+    });
+
+    expect(mockLogger.warn).toHaveBeenCalledWith('No Google Docs found in the specified folder or its subfolders.');
+    expect(mockLogger.error).not.toHaveBeenCalled();
+  });
+
   it('traverses folder and subfolders to load Google Docs into store', async () => {
     process.env.GOOGLE_DRIVE_FOLDER_ID = 'root-folder';
     process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL = 'service-account@test.com';
