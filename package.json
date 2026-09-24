@@ -17,6 +17,7 @@
     "astro": "^7.2.6",
     "bezier-easing": "^2.1.0",
     "colorjs.io": "^0.5.2",
+    "googleapis": "^181.0.0",
     "immutable": "^5.1.4",
     "modern-normalize": "^3.0.1",
     "sass": "^1.63.6",

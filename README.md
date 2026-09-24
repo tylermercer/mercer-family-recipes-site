@@ -22,6 +22,56 @@ An opinionated starter for Astro on Cloudflare Workers, based on the setup I use
 
 The script will handle installing dependencies (via `pnpm`), customizing your project name and theme, and setting up the necessary GitHub Secrets for automatic deployment to Cloudflare.
 
+## Google Drive Setup & Environment Secrets
+
+This project includes a custom Astro Content Layer loader (`googleDriveLoader`) that pulls all Google Docs from a specified Google Drive folder and its subfolders at build time.
+
+### 1. Setting up Google Drive Access
+
+1. **Create a Google Cloud Project**:
+   - Open the [Google Cloud Console](https://console.cloud.google.com/).
+   - Create a new project or select an existing one.
+2. **Enable the Google Drive API**:
+   - Go to **APIs & Services > Library**.
+   - Search for **Google Drive API** and click **Enable**.
+3. **Create a Service Account**:
+   - Go to **APIs & Services > Credentials**.
+   - Click **Create Credentials** > **Service Account**.
+   - Fill in the service account details and click **Create and Continue**.
+   - Once created, click on the service account, navigate to the **Keys** tab, click **Add Key** > **Create new key**, select **JSON**, and download the key file.
+4. **Share Google Drive Folder**:
+   - Go to Google Drive and locate the folder containing your recipes or documents.
+   - Click **Share**.
+   - Copy the `client_email` address from the downloaded JSON key file and share the folder with this email as a **Viewer**.
+   - Ensure subfolders are also accessible (folders shared with parent access will automatically share subfolders).
+5. **Obtain Folder ID**:
+   - Open the folder in Google Drive.
+   - Copy the folder ID from the URL (`https://drive.google.com/drive/folders/FOLDER_ID_HERE`).
+
+### 2. Environment Variables & Deployment Secrets
+
+The build step requires three secrets/environment variables:
+
+- `GOOGLE_DRIVE_FOLDER_ID`: The ID of your target Google Drive folder.
+- `GOOGLE_SERVICE_ACCOUNT_EMAIL`: The `client_email` field from your Service Account JSON key.
+- `GOOGLE_PRIVATE_KEY`: The `private_key` field from your Service Account JSON key (including newlines).
+
+#### Local Setup (`.env`)
+Create a `.env` file in the root directory:
+```env
+GOOGLE_DRIVE_FOLDER_ID="your_folder_id_here"
+GOOGLE_SERVICE_ACCOUNT_EMAIL="your-service-account@your-project.iam.gserviceaccount.com"
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+#### GitHub Actions Deployment
+Add the three values to your GitHub repository under **Settings > Secrets and variables > Actions**:
+- `GOOGLE_DRIVE_FOLDER_ID`
+- `GOOGLE_SERVICE_ACCOUNT_EMAIL`
+- `GOOGLE_PRIVATE_KEY`
+
+*Note: The `Build site` and `Deploy to Cloudflare` steps in `.github/workflows/main.yml` are temporarily disabled (`if: false`). Once you have added the required secrets to GitHub Repository Secrets, edit `.github/workflows/main.yml` to remove the `if: false` condition on those steps to enable automated builds and deploys.*
+
 ## Features
 
 ### Core folder aliases
