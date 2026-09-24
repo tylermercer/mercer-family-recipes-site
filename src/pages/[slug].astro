@@ -1,0 +1,34 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '@layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const recipes = await getCollection('recipes');
+  return recipes.map((recipe) => ({
+    params: { slug: recipe.id },
+    props: { recipe },
+  }));
+}
+
+const { recipe } = Astro.props;
+const { Content } = await render(recipe);
+---
+
+<Layout>
+	<main class="u-guttered-lg l-stack l-space-xl">
+		<nav class="l-space-s">
+			<a href="/" role="button">&larr; Back to all recipes</a>
+		</nav>
+		<article class="l-space-m recipe-content">
+			<h1>{recipe.data.title}</h1>
+			{recipe.data.lastModified && (
+				<p class="u-step--1" style="opacity: 0.8; margin-bottom: 1.5rem;">
+					Last modified: {new Date(recipe.data.lastModified).toLocaleDateString()}
+				</p>
+			)}
+			<div class="e-content">
+				<Content />
+			</div>
+		</article>
+	</main>
+</Layout>
