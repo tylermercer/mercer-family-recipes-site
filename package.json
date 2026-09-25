@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "encrypt": "staticrypt ./dist/ -r --template-color-primary \"#CC5500\" --template-color-secondary \"#CC5500\" --template-title \"Mercer Family Recipes\"",
     "preview": "astro preview",
     "astro": "astro",
     "test": "vitest run",
@@ -24,6 +25,7 @@
     "satori": "^0.12.1",
     "satori-html": "^0.3.2",
     "sharp": "^0.33.5",
+    "staticrypt": "^3.5.4",
     "unist-util-visit": "^5.1.0",
     "utopia-core-scss": "^1.3.1"
   },
