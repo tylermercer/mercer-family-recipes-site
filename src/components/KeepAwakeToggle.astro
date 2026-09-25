@@ -1,0 +1,118 @@
+---
+---
+
+<div class="keep-awake-container">
+  <label class="keep-awake-label u-step--1">
+    <input type="checkbox" id="keep-awake-toggle" class="keep-awake-checkbox" aria-label="Keep screen awake" />
+    <span class="keep-awake-text">Keep screen awake</span>
+  </label>
+</div>
+
+<script>
+  import { isWakeLockSupported, requestScreenWakeLock, releaseScreenWakeLock } from '@utils/wakeLock';
+
+  let wakeLockSentinel: WakeLockSentinel | null = null;
+
+  async function updateWakeLock(enabled: boolean, checkbox: HTMLInputElement) {
+    if (enabled) {
+      wakeLockSentinel = await requestScreenWakeLock();
+      if (!wakeLockSentinel) {
+        checkbox.checked = false;
+      } else {
+        wakeLockSentinel.addEventListener('release', () => {
+          wakeLockSentinel = null;
+          if (document.visibilityState === 'visible' && checkbox.checked) {
+            requestScreenWakeLock().then((sentinel) => {
+              wakeLockSentinel = sentinel;
+              if (!sentinel) checkbox.checked = false;
+            });
+          }
+        });
+      }
+    } else {
+      if (wakeLockSentinel) {
+        await releaseScreenWakeLock(wakeLockSentinel);
+        wakeLockSentinel = null;
+      }
+    }
+  }
+
+  function initKeepAwakeToggle() {
+    const checkbox = document.querySelector<HTMLInputElement>('#keep-awake-toggle');
+    if (!checkbox) return;
+
+    if (!isWakeLockSupported()) {
+      checkbox.disabled = true;
+      const label = checkbox.closest('.keep-awake-label');
+      if (label) {
+        label.setAttribute('title', 'Screen Wake Lock is not supported on this browser');
+      }
+      return;
+    }
+
+    checkbox.addEventListener('change', async () => {
+      await updateWakeLock(checkbox.checked, checkbox);
+    });
+
+    document.addEventListener('visibilitychange', async () => {
+      if (document.visibilityState === 'visible' && checkbox.checked && !wakeLockSentinel) {
+        await updateWakeLock(true, checkbox);
+      }
+    });
+  }
+
+  initKeepAwakeToggle();
+
+  window.addEventListener('pageshow', (event: PageTransitionEvent) => {
+    if (event.persisted) {
+      initKeepAwakeToggle();
+    }
+  });
+</script>
+
+<style>
+  .keep-awake-container {
+    display: inline-flex;
+    align-items: center;
+    user-select: none;
+  }
+
+  .keep-awake-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.4rem 0.75rem;
+    background: var(--gray-3);
+    color: var(--gray-12);
+    border: 1px solid var(--gray-6);
+    border-radius: 6px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .keep-awake-label:hover:not(:has(:disabled)) {
+    background: var(--gray-4);
+    border-color: var(--gray-7);
+  }
+
+  .keep-awake-checkbox {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+    accent-color: var(--primary-9);
+  }
+
+  .keep-awake-checkbox:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .keep-awake-label:has(.keep-awake-checkbox:disabled) {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .keep-awake-text {
+    font-weight: 500;
+  }
+</style>

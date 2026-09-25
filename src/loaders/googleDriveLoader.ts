@@ -7,10 +7,10 @@ export interface GoogleDriveLoaderOptions {
   privateKey: string;
 }
 
-export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
-  const folderId = options.folderId;
-  const clientEmail = options.serviceAccountEmail;
-  const rawPrivateKey = options.privateKey;
+export function googleDriveLoader(options?: Partial<GoogleDriveLoaderOptions>): Loader {
+  const folderId = options?.folderId ?? process.env.GOOGLE_DRIVE_FOLDER_ID;
+  const clientEmail = options?.serviceAccountEmail ?? process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const rawPrivateKey = options?.privateKey ?? process.env.GOOGLE_PRIVATE_KEY;
   const privateKey = rawPrivateKey?.replace(/\\n/g, '\n');
 
   return {
@@ -87,7 +87,9 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
                 mimeType: 'text/markdown',
               });
 
-              const renderedContent = await renderMarkdown(exportResponse.data as string);
+              const renderedContent = renderMarkdown
+                ? await renderMarkdown(exportResponse.data as string)
+                : { html: exportResponse.data as string };
 
               // Generate a safe slug/ID from the file name
               const id = file.name
