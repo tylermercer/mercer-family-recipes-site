@@ -15,7 +15,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
 
   return {
     name: 'google-drive-loader',
-    load: async ({ store, logger, parseData }) => {
+    load: async ({ store, logger, parseData, renderMarkdown }) => {
       if (!folderId) {
         logger.error('Google Drive Folder ID is missing.');
         return;
@@ -84,10 +84,10 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
               // Export Google Doc content as HTML
               const exportResponse = await drive.files.export({
                 fileId: file.id,
-                mimeType: 'text/html',
+                mimeType: 'text/markdown',
               });
 
-              const htmlContent = exportResponse.data as string;
+              const renderedContent = await renderMarkdown(exportResponse.data as string);
 
               // Generate a safe slug/ID from the file name
               const id = file.name
@@ -107,13 +107,11 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
                 data: rawData,
               });
 
-              // Store entry along with rendered HTML content
+              // Store entry along with rendered content
               store.set({
                 id,
                 data: parsedData,
-                rendered: {
-                  html: htmlContent,
-                },
+                rendered: renderedContent,
               });
             }
 
