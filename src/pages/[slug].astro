@@ -1,9 +1,27 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Layout from '@layouts/Base.astro';
+import KeepAwakeToggle from '@components/KeepAwakeToggle.astro';
 
 export async function getStaticPaths() {
   const recipes = await getCollection('recipes');
+  if (recipes.length === 0) {
+    return [
+      {
+        params: { slug: 'sample-recipe' },
+        props: {
+          recipe: {
+            id: 'sample-recipe',
+            data: {
+              title: "Grandma's Chocolate Chip Cookies",
+              lastModified: new Date(),
+            },
+            isMock: true,
+          },
+        },
+      },
+    ];
+  }
   return recipes.map((recipe) => ({
     params: { slug: recipe.id },
     props: { recipe },
@@ -11,7 +29,11 @@ export async function getStaticPaths() {
 }
 
 const { recipe } = Astro.props;
-const { Content } = await render(recipe);
+let Content = null;
+if (!recipe.isMock) {
+  const rendered = await render(recipe);
+  Content = rendered.Content;
+}
 ---
 
 <Layout>
@@ -26,8 +48,11 @@ const { Content } = await render(recipe);
 					Last modified: {new Date(recipe.data.lastModified).toLocaleDateString()}
 				</p>
 			)}
+			<div style="margin-bottom: 1.5rem;">
+				<KeepAwakeToggle />
+			</div>
 			<div class="e-content">
-				<Content />
+				{Content ? <Content /> : <p>1. Mix ingredients.<br/>2. Bake at 350°F for 10 minutes.<br/>3. Enjoy!</p>}
 			</div>
 		</article>
 	</main>
