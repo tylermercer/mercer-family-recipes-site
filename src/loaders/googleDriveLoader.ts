@@ -2,16 +2,15 @@ import type { Loader } from 'astro/loaders';
 import { google } from 'googleapis';
 
 export interface GoogleDriveLoaderOptions {
-  folderId?: string;
-  serviceAccountEmail?: string;
-  clientEmail?: string;
-  privateKey?: string;
+  folderId: string;
+  serviceAccountEmail: string;
+  privateKey: string;
 }
 
-export function googleDriveLoader(options: GoogleDriveLoaderOptions = {}): Loader {
-  const folderId = options.folderId || process.env.GOOGLE_DRIVE_FOLDER_ID;
-  const clientEmail = options.serviceAccountEmail || options.clientEmail || process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const rawPrivateKey = options.privateKey || process.env.GOOGLE_PRIVATE_KEY;
+export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
+  const folderId = options.folderId;
+  const clientEmail = options.serviceAccountEmail;
+  const rawPrivateKey = options.privateKey;
   const privateKey = rawPrivateKey?.replace(/\\n/g, '\n');
 
   return {
