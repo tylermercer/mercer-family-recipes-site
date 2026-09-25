@@ -38,8 +38,11 @@ describe('googleDriveLoader', () => {
   });
 
   it('logs an error if folderId is not provided in options or environment', async () => {
-    delete process.env.GOOGLE_DRIVE_FOLDER_ID;
-    const loader = googleDriveLoader();
+    const loader = googleDriveLoader({
+      folderId: '',
+      serviceAccountEmail: 'email@test.com',
+      privateKey: 'key',
+    });
 
     const mockLogger = {
       info: vi.fn(),
@@ -78,11 +81,11 @@ describe('googleDriveLoader', () => {
   });
 
   it('logs an error if service account credentials are missing', async () => {
-    process.env.GOOGLE_DRIVE_FOLDER_ID = 'folder-123';
-    delete process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    delete process.env.GOOGLE_PRIVATE_KEY;
-
-    const loader = googleDriveLoader();
+    const loader = googleDriveLoader({
+      folderId: 'folder-123',
+      serviceAccountEmail: '',
+      privateKey: '',
+    });
 
     const mockLogger = {
       info: vi.fn(),
@@ -118,10 +121,6 @@ describe('googleDriveLoader', () => {
   });
 
   it('allows passing folderId, serviceAccountEmail, and privateKey via loader options', async () => {
-    delete process.env.GOOGLE_DRIVE_FOLDER_ID;
-    delete process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    delete process.env.GOOGLE_PRIVATE_KEY;
-
     mockList.mockResolvedValue({ data: { files: [] } });
 
     const loader = googleDriveLoader({
@@ -159,10 +158,6 @@ describe('googleDriveLoader', () => {
   });
 
   it('traverses folder and subfolders to load Google Docs into store', async () => {
-    process.env.GOOGLE_DRIVE_FOLDER_ID = 'root-folder';
-    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL = 'service-account@test.com';
-    process.env.GOOGLE_PRIVATE_KEY = '-----BEGIN PRIVATE KEY-----\\nfake-key\\n-----END PRIVATE KEY-----';
-
     // Mock Drive API response logic:
     // Call 1: List subfolders of root-folder -> returns subfolder 'sub-folder-1'
     // Call 2: List docs in root-folder -> returns 'Root Recipe' doc
@@ -200,7 +195,11 @@ describe('googleDriveLoader', () => {
       return { data: `<html><body>Content for ${fileId}</body></html>` };
     });
 
-    const loader = googleDriveLoader();
+    const loader = googleDriveLoader({
+      folderId: 'root-folder',
+      serviceAccountEmail: 'service-account@test.com',
+      privateKey: '-----BEGIN PRIVATE KEY-----\\nfake-key\\n-----END PRIVATE KEY-----',
+    });
 
     const mockLogger = {
       info: vi.fn(),
@@ -222,11 +221,13 @@ describe('googleDriveLoader', () => {
     };
 
     const mockParseData = vi.fn().mockImplementation(async ({ id, data }) => data);
+    const mockRenderMarkdown = vi.fn().mockImplementation(async (content) => ({ html: content }));
 
     await loader.load({
       store: mockStore as any,
       logger: mockLogger as any,
       parseData: mockParseData,
+      renderMarkdown: mockRenderMarkdown,
       meta: {} as any,
       generateDigest: vi.fn() as any,
       config: {} as any,
@@ -278,13 +279,13 @@ describe('googleDriveLoader', () => {
   });
 
   it('logs a warning when no Google Docs are found', async () => {
-    process.env.GOOGLE_DRIVE_FOLDER_ID = 'empty-folder';
-    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL = 'service-account@test.com';
-    process.env.GOOGLE_PRIVATE_KEY = 'private-key';
-
     mockList.mockResolvedValue({ data: { files: [] } });
 
-    const loader = googleDriveLoader();
+    const loader = googleDriveLoader({
+      folderId: 'empty-folder',
+      serviceAccountEmail: 'service-account@test.com',
+      privateKey: 'private-key',
+    });
 
     const mockLogger = {
       info: vi.fn(),
@@ -314,13 +315,13 @@ describe('googleDriveLoader', () => {
   });
 
   it('catches and logs API errors', async () => {
-    process.env.GOOGLE_DRIVE_FOLDER_ID = 'error-folder';
-    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL = 'service-account@test.com';
-    process.env.GOOGLE_PRIVATE_KEY = 'private-key';
-
     mockList.mockRejectedValue(new Error('API quota exceeded'));
 
-    const loader = googleDriveLoader();
+    const loader = googleDriveLoader({
+      folderId: 'error-folder',
+      serviceAccountEmail: 'service-account@test.com',
+      privateKey: 'private-key',
+    });
 
     const mockLogger = {
       info: vi.fn(),
