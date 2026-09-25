@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "encrypt": "staticrypt ./dist/ -r --template-color-primary \"#0b5265\" --template-color-secondary \"#0b5265\" --template-title \"Mercer Family Recipes\"",
+    "encrypt": "staticrypt ./dist/ -r --template-color-primary \"#CC5500\" --template-color-secondary \"#CC5500\" --template-title \"Mercer Family Recipes\"",
     "preview": "astro preview",
     "astro": "astro",
     "test": "vitest run",
