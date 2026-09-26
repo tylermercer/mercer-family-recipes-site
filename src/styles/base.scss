@@ -62,6 +62,26 @@
         margin: 0;
     }
 
+    p + p,
+    .e-content p + p {
+        margin-top: 1em;
+    }
+
+    .e-content {
+        p {
+            margin-bottom: 1em;
+        }
+
+        p:last-child {
+            margin-bottom: 0;
+        }
+
+        ul, ol {
+            margin-top: 0.5em;
+            margin-bottom: 1em;
+        }
+    }
+
     button,
     a[role=button] {
         display: inline-block;

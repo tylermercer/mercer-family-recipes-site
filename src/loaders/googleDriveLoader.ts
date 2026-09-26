@@ -71,7 +71,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
           do {
             const docResponse: any = await drive.files.list({
               q: `'${currentFolderId}' in parents and mimeType = 'application/vnd.google-apps.document' and trashed = false`,
-              fields: 'nextPageToken, files(id, name, modifiedTime)',
+              fields: 'nextPageToken, files(id, name, modifiedTime, webViewLink)',
               pageToken: docPageToken,
             });
 
@@ -99,6 +99,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
               const rawData = {
                 title: file.name,
                 lastModified: file.modifiedTime ? new Date(file.modifiedTime) : new Date(),
+                driveUrl: file.webViewLink || `https://docs.google.com/document/d/${file.id}/edit`,
               };
 
               // Parse and validate via Astro's data pipeline

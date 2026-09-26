@@ -11,6 +11,7 @@ const recipes = defineCollection({
   schema: z.object({
     title: z.string(),
     lastModified: z.date(),
+    driveUrl: z.string().optional(),
   }),
 });
 
