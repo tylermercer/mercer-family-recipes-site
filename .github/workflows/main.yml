@@ -6,7 +6,6 @@ name: Build and Deploy to Cloudflare Workers
 # - GOOGLE_DRIVE_FOLDER_ID
 # - GOOGLE_SERVICE_ACCOUNT_EMAIL
 # - GOOGLE_PRIVATE_KEY
-# - STATICRYPT_PASSWORD
 
 on:
   # schedule: # Run at 15:00 UTC every day --- enable if you want to do something like scheduled blog posts
@@ -81,15 +80,6 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm build
           echo "result=built" >> $GITHUB_OUTPUT
-
-      - name: Encrypt site
-        id: encrypt_site
-        env:
-          STATICRYPT_PASSWORD: ${{ secrets.STATICRYPT_PASSWORD }}
-        run: |
-          pnpm run encrypt
-          rm -rf ./dist/
-          mv ./encrypted/dist ./dist
 
       - name: Extract variables
         id: extract_vars
