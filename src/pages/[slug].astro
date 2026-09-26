@@ -42,7 +42,7 @@ if (!recipe.isMock) {
 		<nav class="l-space-s">
 			<a href="/" role="button">&larr; Back to all recipes</a>
 		</nav>
-		<article class="l-space-m l-prose recipe-content">
+		<article class="l-space-m recipe-content">
 			<h1>{recipe.data.title}</h1>
 			<div class="l-cluster" style="opacity: 0.8; margin-bottom: 1.5rem;">
 				{recipe.data.lastModified && (
@@ -62,7 +62,7 @@ if (!recipe.isMock) {
 					Reset checklist
 				</button>
 			</div>
-			<div class="e-content">
+			<div class="e-content l-prose">
 				{Content ? <Content /> : (
 					<div>
 						<p>Ingredients:</p>
