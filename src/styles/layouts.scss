@@ -61,6 +61,13 @@
         min-inline-size: var(--l-sidebar-content-min-width, 50%);
     }
 
+    .l-prose {
+        --l-space: 0;
+        & > :not(:first-child) {
+            margin-block-start: 1lh;
+        }
+    }
+
     // Space utilities
     .l-space-none { --l-space: 0; }
     .l-space-3xs { --l-space: var(--space-3xs); }
