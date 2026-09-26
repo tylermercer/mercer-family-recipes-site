@@ -15,6 +15,7 @@ export async function getStaticPaths() {
             data: {
               title: "Grandma's Chocolate Chip Cookies",
               lastModified: new Date(),
+              driveUrl: 'https://docs.google.com/document/d/sample/edit',
             },
             isMock: true,
           },
@@ -43,17 +44,97 @@ if (!recipe.isMock) {
 		</nav>
 		<article class="l-space-m l-prose recipe-content">
 			<h1>{recipe.data.title}</h1>
-			{recipe.data.lastModified && (
-				<p class="u-step--1" style="opacity: 0.8; margin-bottom: 1.5rem;">
-					Last modified: {new Date(recipe.data.lastModified).toLocaleDateString()}
-				</p>
-			)}
-			<div style="margin-bottom: 1.5rem;">
+			<div class="l-cluster" style="opacity: 0.8; margin-bottom: 1.5rem;">
+				{recipe.data.lastModified && (
+					<p class="u-step--1">
+						Last modified: {new Date(recipe.data.lastModified).toLocaleDateString()}
+					</p>
+				)}
+				{recipe.data.driveUrl && (
+					<p class="u-step--1">
+						&bull; <a href={recipe.data.driveUrl} target="_blank" rel="noopener noreferrer">View Google Doc source</a>
+					</p>
+				)}
+			</div>
+			<div class="l-cluster" style="margin-bottom: 1.5rem; gap: 0.75rem; align-items: center;">
 				<KeepAwakeToggle />
+				<button id="reset-checklist-btn" type="button" class="u-step--1" style="display: none; padding: 0.25rem 0.5rem;">
+					Reset checklist
+				</button>
 			</div>
 			<div class="e-content">
-				{Content ? <Content /> : <p>1. Mix ingredients.<br/>2. Bake at 350°F for 10 minutes.<br/>3. Enjoy!</p>}
+				{Content ? <Content /> : (
+					<div>
+						<p>Ingredients:</p>
+						<ul style="list-style: none; padding-left: 0;">
+							<li><label><input type="checkbox" disabled /> 1 cup flour</label></li>
+							<li><label><input type="checkbox" disabled /> 1/2 cup sugar</label></li>
+						</ul>
+						<p>1. Mix ingredients.<br/>2. Bake at 350°F for 10 minutes.<br/>3. Enjoy!</p>
+					</div>
+				)}
 			</div>
 		</article>
 	</main>
+
+	<script>
+		function initCheckboxes() {
+			const contentContainer = document.querySelector('.e-content');
+			if (!contentContainer) return;
+
+			const checkboxes = contentContainer.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
+			if (checkboxes.length === 0) return;
+
+			const resetBtn = document.getElementById('reset-checklist-btn');
+			if (resetBtn) {
+				resetBtn.style.display = 'inline-block';
+			}
+
+			const storageKey = `recipe-checkboxes-${window.location.pathname}`;
+			let savedStates: Record<number, boolean> = {};
+
+			try {
+				const stored = localStorage.getItem(storageKey);
+				if (stored) {
+					savedStates = JSON.parse(stored);
+				}
+			} catch (e) {
+				console.error('Failed to load checkbox states from localStorage', e);
+			}
+
+			checkboxes.forEach((checkbox, index) => {
+				checkbox.disabled = false;
+				checkbox.checked = Boolean(savedStates[index]);
+
+				checkbox.addEventListener('change', () => {
+					savedStates[index] = checkbox.checked;
+					try {
+						localStorage.setItem(storageKey, JSON.stringify(savedStates));
+					} catch (e) {
+						console.error('Failed to save checkbox states to localStorage', e);
+					}
+				});
+			});
+
+			if (resetBtn) {
+				resetBtn.addEventListener('click', () => {
+					checkboxes.forEach((checkbox, index) => {
+						checkbox.checked = false;
+						savedStates[index] = false;
+					});
+					try {
+						localStorage.removeItem(storageKey);
+					} catch (e) {
+						console.error('Failed to clear checkbox states from localStorage', e);
+					}
+				});
+			}
+		}
+
+		if (document.readyState === 'loading') {
+			document.addEventListener('DOMContentLoaded', initCheckboxes);
+		} else {
+			initCheckboxes();
+		}
+	</script>
 </Layout>

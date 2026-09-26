@@ -242,6 +242,7 @@ describe('googleDriveLoader', () => {
       data: {
         title: "Grandma's Chocolate Chip Cookies!",
         lastModified: new Date('2025-01-01T00:00:00Z'),
+        driveUrl: 'https://docs.google.com/document/d/doc-1/edit',
       },
     });
 
@@ -250,6 +251,7 @@ describe('googleDriveLoader', () => {
       data: {
         title: "Grandma's Chocolate Chip Cookies!",
         lastModified: new Date('2025-01-01T00:00:00Z'),
+        driveUrl: 'https://docs.google.com/document/d/doc-1/edit',
       },
       rendered: {
         html: '<html><body>Content for doc-1</body></html>',
@@ -261,6 +263,7 @@ describe('googleDriveLoader', () => {
       data: {
         title: 'Pasta Carbonara',
         lastModified: new Date('2025-01-02T00:00:00Z'),
+        driveUrl: 'https://docs.google.com/document/d/doc-2/edit',
       },
     });
 
@@ -269,6 +272,7 @@ describe('googleDriveLoader', () => {
       data: {
         title: 'Pasta Carbonara',
         lastModified: new Date('2025-01-02T00:00:00Z'),
+        driveUrl: 'https://docs.google.com/document/d/doc-2/edit',
       },
       rendered: {
         html: '<html><body>Content for doc-2</body></html>',
