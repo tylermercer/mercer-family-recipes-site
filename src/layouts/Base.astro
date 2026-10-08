@@ -1,5 +1,7 @@
 ---
 import '@styles/index.scss';
+
+const title = "Family Recipes";
 ---
 <!doctype html>
 <html lang="en">
@@ -8,7 +10,7 @@ import '@styles/index.scss';
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<title>{title}</title>
 		<script is:inline>
 			(function () {
 				const stored = localStorage.getItem('theme');
@@ -22,7 +24,7 @@ import '@styles/index.scss';
 	</head>
 	<body>
 		<header class="u-guttered-lg l-cluster">
-			<div style="flex: 1;"><strong>My Styled Site</strong></div>
+			<a href="/"><strong>{title}</strong></a>
 		</header>
 		<slot />
 	</body>
