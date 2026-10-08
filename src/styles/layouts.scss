@@ -27,13 +27,6 @@
         align-items: center;
     }
 
-    .l-box {
-        padding: var(--l-space, var(--space-m));
-        border: 1px solid var(--gray-6);
-        background-color: var(--gray-2);
-        border-radius: 8px;
-    }
-
     .l-center {
         box-sizing: content-box;
         margin-inline: auto;
