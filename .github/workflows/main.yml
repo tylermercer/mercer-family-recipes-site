@@ -107,7 +107,7 @@ jobs:
 
       - name: Deploy to Cloudflare (pull request)
         id: deploy-pr
-        run: npx wrangler versions upload --preview-alias=${{ steps.extract_vars.outputs.slugified_branch }}
+        run: npx wrangler preview --name=${{ steps.extract_vars.outputs.slugified_branch }}
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
