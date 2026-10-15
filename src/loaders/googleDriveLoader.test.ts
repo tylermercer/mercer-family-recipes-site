@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { googleDriveLoader } from './googleDriveLoader';
+import { googleDriveLoader, processDocIngredients } from './googleDriveLoader';
 
 // Mock word-extractor using a class
 vi.mock('word-extractor', () => {
@@ -66,6 +66,62 @@ vi.mock('googleapis', () => {
       }),
     },
   };
+});
+
+describe('processDocIngredients', () => {
+  it('prepends - to lines in paragraphs where majority of non-empty lines start with numbers', () => {
+    const input = `Title Paragraph
+
+Ingredients:
+
+2 cups flour
+1/2 tsp salt
+1 tsp baking powder
+1 egg
+pinch of cinnamon
+
+Instructions:
+Mix dry ingredients.
+Add wet ingredients and stir.
+Bake at 350 for 20 mins.`;
+
+    const expected = `Title Paragraph
+
+Ingredients:
+
+- 2 cups flour
+- 1/2 tsp salt
+- 1 tsp baking powder
+- 1 egg
+- pinch of cinnamon
+
+Instructions:
+Mix dry ingredients.
+Add wet ingredients and stir.
+Bake at 350 for 20 mins.`;
+
+    expect(processDocIngredients(input)).toBe(expected);
+  });
+
+  it('handles fraction unicode symbols and existing bullet markers', () => {
+    const input = `½ cup butter
+• 1 tsp vanilla
+¾ cup sugar`;
+
+    const expected = `- ½ cup butter
+- 1 tsp vanilla
+- ¾ cup sugar`;
+
+    expect(processDocIngredients(input)).toBe(expected);
+  });
+
+  it('leaves paragraphs untouched if majority of lines do not start with numbers', () => {
+    const input = `Step 1: Preheat oven.
+Step 2: Mix flour and sugar.
+Enjoy!`;
+
+    expect(processDocIngredients(input)).toBe(input);
+  });
 });
 
 describe('googleDriveLoader', () => {
