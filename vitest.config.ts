@@ -2,8 +2,13 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    environment: 'jsdom',
+    environment: 'node',
     globals: true,
+    server: {
+      deps: {
+        external: ['googleapis', 'word-extractor', 'mammoth', 'turndown'],
+      },
+    },
   },
   resolve: {
     alias: {

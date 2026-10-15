@@ -9,7 +9,9 @@ import rawFonts from './lib/plugins/vite/rawFonts.js';
 // https://astro.build/config
 export default defineConfig({
   site: 'https://mercer-fam-recipes.tmercer.workers.dev',
-  adapter: cloudflare(),
+  adapter: cloudflare({
+    session: false,
+  }),
   markdown: {
     processor: unified(),
     remarkPlugins: [remarkEmdash],
