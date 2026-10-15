@@ -8,15 +8,17 @@ if (fs.existsSync(configPath)) {
     const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
     if (Array.isArray(data.kv_namespaces)) {
-      data.kv_namespaces = data.kv_namespaces.map((kv) =>
-        kv.binding === 'SESSION' && !kv.id ? { ...kv, id: 'SESSION_KV' } : kv,
-      );
+      data.kv_namespaces = data.kv_namespaces.filter((kv) => kv.binding !== 'SESSION');
+      if (data.kv_namespaces.length === 0) {
+        delete data.kv_namespaces;
+      }
     }
 
     if (data.previews && Array.isArray(data.previews.kv_namespaces)) {
-      data.previews.kv_namespaces = data.previews.kv_namespaces.map((kv) =>
-        kv.binding === 'SESSION' && !kv.id ? { ...kv, id: 'SESSION_KV' } : kv,
-      );
+      data.previews.kv_namespaces = data.previews.kv_namespaces.filter((kv) => kv.binding !== 'SESSION');
+      if (data.previews.kv_namespaces.length === 0) {
+        delete data.previews.kv_namespaces;
+      }
     }
 
     fs.writeFileSync(configPath, JSON.stringify(data, null, 2), 'utf8');
