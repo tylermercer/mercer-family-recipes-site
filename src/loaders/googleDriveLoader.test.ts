@@ -1,9 +1,32 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { googleDriveLoader } from './googleDriveLoader';
 
+// Mock mammoth and turndown
+vi.mock('mammoth', () => ({
+  default: {
+    convertToHtml: vi.fn().mockImplementation(async () => ({
+      value: '<h1>Converted DOCX HTML</h1>',
+      messages: [{ message: 'test warning' }],
+    })),
+  },
+}));
+
+vi.mock('turndown', () => {
+  return {
+    default: vi.fn().mockImplementation(function () {
+      return {
+        turndown: vi.fn().mockImplementation((html: string) => `# Converted Markdown from HTML`),
+      };
+    }),
+  };
+});
+
 // Mock googleapis
 const mockList = vi.fn();
 const mockExport = vi.fn();
+const mockGet = vi.fn();
+const mockCopy = vi.fn();
+const mockDelete = vi.fn();
 
 vi.mock('googleapis', () => {
   return {
@@ -18,6 +41,9 @@ vi.mock('googleapis', () => {
           files: {
             list: mockList,
             export: mockExport,
+            get: mockGet,
+            copy: mockCopy,
+            delete: mockDelete,
           },
         };
       }),
@@ -55,20 +81,12 @@ describe('googleDriveLoader', () => {
     const mockStore = {
       clear: vi.fn(),
       set: vi.fn(),
-      get: vi.fn(),
-      has: vi.fn(),
-      delete: vi.fn(),
-      keys: vi.fn(),
-      values: vi.fn(),
-      entries: vi.fn(),
     };
-
-    const mockParseData = vi.fn();
 
     await loader.load({
       store: mockStore as any,
       logger: mockLogger as any,
-      parseData: mockParseData,
+      parseData: vi.fn(),
       meta: {} as any,
       generateDigest: vi.fn() as any,
       config: {} as any,
@@ -98,12 +116,6 @@ describe('googleDriveLoader', () => {
     const mockStore = {
       clear: vi.fn(),
       set: vi.fn(),
-      get: vi.fn(),
-      has: vi.fn(),
-      delete: vi.fn(),
-      keys: vi.fn(),
-      values: vi.fn(),
-      entries: vi.fn(),
     };
 
     await loader.load({
@@ -120,13 +132,13 @@ describe('googleDriveLoader', () => {
     expect(mockLogger.error).toHaveBeenCalledWith('Google Service Account credentials (email or private key) are missing.');
   });
 
-  it('allows passing folderId, serviceAccountEmail, and privateKey via loader options', async () => {
+  it('logs a warning when no documents are found', async () => {
     mockList.mockResolvedValue({ data: { files: [] } });
 
     const loader = googleDriveLoader({
-      folderId: 'opt-folder',
-      serviceAccountEmail: 'opt-email@test.com',
-      privateKey: '-----BEGIN PRIVATE KEY-----\\nopt-key\\n-----END PRIVATE KEY-----',
+      folderId: 'empty-folder',
+      serviceAccountEmail: 'service-account@test.com',
+      privateKey: 'private-key',
     });
 
     const mockLogger = {
@@ -134,7 +146,6 @@ describe('googleDriveLoader', () => {
       warn: vi.fn(),
       error: vi.fn(),
       debug: vi.fn(),
-      fork: vi.fn(),
     };
 
     const mockStore = {
@@ -153,47 +164,73 @@ describe('googleDriveLoader', () => {
       watcher: {} as any,
     });
 
-    expect(mockLogger.warn).toHaveBeenCalledWith('No Google Docs found in the specified folder or its subfolders.');
-    expect(mockLogger.error).not.toHaveBeenCalled();
+    expect(mockLogger.warn).toHaveBeenCalledWith('No documents found in the specified folder or its subfolders.');
   });
 
-  it('traverses folder and subfolders to load Google Docs into store', async () => {
-    // Mock Drive API response logic:
-    // Call 1: List subfolders of root-folder -> returns subfolder 'sub-folder-1'
-    // Call 2: List docs in root-folder -> returns 'Root Recipe' doc
-    // Call 3: List subfolders of sub-folder-1 -> returns no subfolders
-    // Call 4: List docs in sub-folder-1 -> returns 'Sub Recipe' doc
+  it('traverses folders and loads Google Doc, .docx, and .doc files', async () => {
     mockList.mockImplementation(async ({ q }) => {
-      if (q.includes("'root-folder'") && q.includes("mimeType = 'application/vnd.google-apps.folder'")) {
-        return { data: { files: [{ id: 'sub-folder-1', name: 'Sub Folder 1' }] } };
-      }
-      if (q.includes("'root-folder'") && q.includes("mimeType = 'application/vnd.google-apps.document'")) {
-        return {
-          data: {
-            files: [
-              { id: 'doc-1', name: 'Grandma\'s Chocolate Chip Cookies!', modifiedTime: '2025-01-01T00:00:00Z' },
-            ],
-          },
-        };
-      }
-      if (q.includes("'sub-folder-1'") && q.includes("mimeType = 'application/vnd.google-apps.folder'")) {
+      // Subfolder query
+      if (q.includes("mimeType = 'application/vnd.google-apps.folder'")) {
+        if (q.includes("'root-folder'")) {
+          return { data: { files: [{ id: 'sub-folder-1', name: 'Sub Folder' }] } };
+        }
         return { data: { files: [] } };
       }
-      if (q.includes("'sub-folder-1'") && q.includes("mimeType = 'application/vnd.google-apps.document'")) {
+
+      // Document query
+      if (q.includes("'root-folder'")) {
         return {
           data: {
             files: [
-              { id: 'doc-2', name: 'Pasta Carbonara', modifiedTime: '2025-01-02T00:00:00Z' },
+              {
+                id: 'doc-gdoc-1',
+                name: 'Grandma\'s Cookies',
+                mimeType: 'application/vnd.google-apps.document',
+                modifiedTime: '2025-01-01T00:00:00Z',
+                webViewLink: 'https://docs.google.com/document/d/doc-gdoc-1/edit',
+              },
+              {
+                id: 'doc-docx-2',
+                name: 'Chocolate Cake.docx',
+                mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                modifiedTime: '2025-01-02T00:00:00Z',
+              },
             ],
           },
         };
       }
+
+      if (q.includes("'sub-folder-1'")) {
+        return {
+          data: {
+            files: [
+              {
+                id: 'doc-legacy-3',
+                name: 'Apple Pie.doc',
+                mimeType: 'application/msword',
+                modifiedTime: '2025-01-03T00:00:00Z',
+              },
+            ],
+          },
+        };
+      }
+
       return { data: { files: [] } };
     });
 
     mockExport.mockImplementation(async ({ fileId }) => {
-      return { data: `<html><body>Content for ${fileId}</body></html>` };
+      return { data: `# Content for ${fileId}` };
     });
+
+    mockGet.mockImplementation(async () => {
+      return { data: new ArrayBuffer(8) };
+    });
+
+    mockCopy.mockImplementation(async ({ requestBody }) => {
+      return { data: { id: 'temp-copy-id-123' } };
+    });
+
+    mockDelete.mockResolvedValue({});
 
     const loader = googleDriveLoader({
       folderId: 'root-folder',
@@ -206,22 +243,15 @@ describe('googleDriveLoader', () => {
       warn: vi.fn(),
       error: vi.fn(),
       debug: vi.fn(),
-      fork: vi.fn(),
     };
 
     const mockStore = {
       clear: vi.fn(),
       set: vi.fn(),
-      get: vi.fn(),
-      has: vi.fn(),
-      delete: vi.fn(),
-      keys: vi.fn(),
-      values: vi.fn(),
-      entries: vi.fn(),
     };
 
     const mockParseData = vi.fn().mockImplementation(async ({ id, data }) => data);
-    const mockRenderMarkdown = vi.fn().mockImplementation(async (content) => ({ html: content }));
+    const mockRenderMarkdown = vi.fn().mockImplementation(async (content) => ({ html: `<p>${content}</p>` }));
 
     await loader.load({
       store: mockStore as any,
@@ -237,77 +267,90 @@ describe('googleDriveLoader', () => {
 
     expect(mockStore.clear).toHaveBeenCalled();
 
+    // 1. Google Doc
     expect(mockParseData).toHaveBeenCalledWith({
-      id: 'grandma-s-chocolate-chip-cookies',
+      id: 'grandma-s-cookies',
       data: {
-        title: "Grandma's Chocolate Chip Cookies!",
+        title: "Grandma's Cookies",
         lastModified: new Date('2025-01-01T00:00:00Z'),
-        driveUrl: 'https://docs.google.com/document/d/doc-1/edit',
+        driveUrl: 'https://docs.google.com/document/d/doc-gdoc-1/edit',
       },
     });
 
-    expect(mockStore.set).toHaveBeenCalledWith({
-      id: 'grandma-s-chocolate-chip-cookies',
-      data: {
-        title: "Grandma's Chocolate Chip Cookies!",
-        lastModified: new Date('2025-01-01T00:00:00Z'),
-        driveUrl: 'https://docs.google.com/document/d/doc-1/edit',
-      },
-      rendered: {
-        html: '<html><body>Content for doc-1</body></html>',
-      },
-    });
-
+    // 2. .docx file (stripped extension)
+    expect(mockGet).toHaveBeenCalledWith({ fileId: 'doc-docx-2', alt: 'media' }, { responseType: 'arraybuffer' });
     expect(mockParseData).toHaveBeenCalledWith({
-      id: 'pasta-carbonara',
+      id: 'chocolate-cake',
       data: {
-        title: 'Pasta Carbonara',
+        title: 'Chocolate Cake',
         lastModified: new Date('2025-01-02T00:00:00Z'),
-        driveUrl: 'https://docs.google.com/document/d/doc-2/edit',
+        driveUrl: 'https://drive.google.com/file/d/doc-docx-2/view',
       },
     });
 
-    expect(mockStore.set).toHaveBeenCalledWith({
-      id: 'pasta-carbonara',
+    // 3. .doc file (copied, converted, exported, deleted)
+    expect(mockCopy).toHaveBeenCalledWith({
+      fileId: 'doc-legacy-3',
+      requestBody: { name: 'tmp-convert-Apple Pie.doc', mimeType: 'application/vnd.google-apps.document' },
+      fields: 'id',
+    });
+    expect(mockDelete).toHaveBeenCalledWith({ fileId: 'temp-copy-id-123' });
+    expect(mockParseData).toHaveBeenCalledWith({
+      id: 'apple-pie',
       data: {
-        title: 'Pasta Carbonara',
-        lastModified: new Date('2025-01-02T00:00:00Z'),
-        driveUrl: 'https://docs.google.com/document/d/doc-2/edit',
-      },
-      rendered: {
-        html: '<html><body>Content for doc-2</body></html>',
+        title: 'Apple Pie',
+        lastModified: new Date('2025-01-03T00:00:00Z'),
+        driveUrl: 'https://drive.google.com/file/d/doc-legacy-3/view',
       },
     });
 
-    expect(mockLogger.info).toHaveBeenCalledWith('Google Docs (2) successfully loaded into Content Layer!');
+    expect(mockStore.set).toHaveBeenCalledTimes(3);
+    expect(mockLogger.info).toHaveBeenCalledWith('3/3 documents loaded into Content Layer!');
   });
 
-  it('logs a warning when no Google Docs are found', async () => {
-    mockList.mockResolvedValue({ data: { files: [] } });
+  it('handles duplicate titles/slugs gracefully', async () => {
+    mockList.mockImplementation(async ({ q }) => {
+      if (q.includes("mimeType = 'application/vnd.google-apps.folder'")) {
+        return { data: { files: [] } };
+      }
 
-    const loader = googleDriveLoader({
-      folderId: 'empty-folder',
-      serviceAccountEmail: 'service-account@test.com',
-      privateKey: 'private-key',
+      return {
+        data: {
+          files: [
+            {
+              id: 'file-id-11111',
+              name: 'Secret Recipe.docx',
+              mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            },
+            {
+              id: 'file-id-22222',
+              name: 'Secret Recipe.doc',
+              mimeType: 'application/msword',
+            },
+          ],
+        },
+      };
     });
 
-    const mockLogger = {
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-      debug: vi.fn(),
-      fork: vi.fn(),
-    };
+    mockGet.mockResolvedValue({ data: new ArrayBuffer(8) });
+    mockCopy.mockResolvedValue({ data: { id: 'temp-222' } });
+    mockExport.mockResolvedValue({ data: 'Content' });
+    mockDelete.mockResolvedValue({});
 
-    const mockStore = {
-      clear: vi.fn(),
-      set: vi.fn(),
-    };
+    const loader = googleDriveLoader({
+      folderId: 'folder',
+      serviceAccountEmail: 'email@test.com',
+      privateKey: 'key',
+    });
+
+    const mockStore = { clear: vi.fn(), set: vi.fn() };
+    const mockParseData = vi.fn().mockImplementation(async ({ id, data }) => data);
 
     await loader.load({
       store: mockStore as any,
-      logger: mockLogger as any,
-      parseData: vi.fn(),
+      logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } as any,
+      parseData: mockParseData,
+      renderMarkdown: vi.fn().mockResolvedValue('html'),
       meta: {} as any,
       generateDigest: vi.fn() as any,
       config: {} as any,
@@ -315,10 +358,60 @@ describe('googleDriveLoader', () => {
       watcher: {} as any,
     });
 
-    expect(mockLogger.warn).toHaveBeenCalledWith('No Google Docs found in the specified folder or its subfolders.');
+    expect(mockParseData).toHaveBeenNthCalledWith(1, {
+      id: 'secret-recipe',
+      data: expect.objectContaining({ title: 'Secret Recipe' }),
+    });
+
+    expect(mockParseData).toHaveBeenNthCalledWith(2, {
+      id: 'secret-recipe-file-id-',
+      data: expect.objectContaining({ title: 'Secret Recipe' }),
+    });
   });
 
-  it('catches and logs API errors', async () => {
+  it('logs error for individual file failure without stopping overall sync', async () => {
+    mockList.mockImplementation(async ({ q }) => {
+      if (q.includes("mimeType = 'application/vnd.google-apps.folder'")) return { data: { files: [] } };
+      return {
+        data: {
+          files: [
+            { id: 'bad-doc', name: 'Corrupted.docx', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+            { id: 'good-doc', name: 'Good.gdoc', mimeType: 'application/vnd.google-apps.document' },
+          ],
+        },
+      };
+    });
+
+    mockGet.mockRejectedValue(new Error('Corrupted binary file'));
+    mockExport.mockResolvedValue({ data: 'Good content' });
+
+    const loader = googleDriveLoader({
+      folderId: 'folder',
+      serviceAccountEmail: 'email@test.com',
+      privateKey: 'key',
+    });
+
+    const mockLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+    const mockStore = { clear: vi.fn(), set: vi.fn() };
+
+    await loader.load({
+      store: mockStore as any,
+      logger: mockLogger as any,
+      parseData: vi.fn().mockImplementation(async ({ id, data }) => data),
+      renderMarkdown: vi.fn().mockResolvedValue('html'),
+      meta: {} as any,
+      generateDigest: vi.fn() as any,
+      config: {} as any,
+      cache: {} as any,
+      watcher: {} as any,
+    });
+
+    expect(mockLogger.error).toHaveBeenCalledWith('Failed to load "Corrupted.docx": Corrupted binary file');
+    expect(mockStore.set).toHaveBeenCalledTimes(1);
+    expect(mockLogger.info).toHaveBeenCalledWith('1/2 documents loaded into Content Layer!');
+  });
+
+  it('catches and logs top-level API errors', async () => {
     mockList.mockRejectedValue(new Error('API quota exceeded'));
 
     const loader = googleDriveLoader({
@@ -349,6 +442,6 @@ describe('googleDriveLoader', () => {
       watcher: {} as any,
     });
 
-    expect(mockLogger.error).toHaveBeenCalledWith('Failed to load Google Docs: API quota exceeded');
+    expect(mockLogger.error).toHaveBeenCalledWith('Failed to load documents: API quota exceeded');
   });
 });
