@@ -22,6 +22,43 @@ const turndown = new TurndownService({
   bulletListMarker: '-',
 });
 
+export function processDocIngredients(text: string): string {
+  if (!text || !text.trim()) return text;
+
+  const paragraphs = text.split(/\r?\n\s*\r?\n/);
+
+  const processedParagraphs = paragraphs.map((paragraph) => {
+    const lines = paragraph.split(/\r?\n/);
+    const nonEmptyLines = lines.filter((line) => line.trim().length > 0);
+
+    if (nonEmptyLines.length === 0) {
+      return paragraph;
+    }
+
+    const numberedCount = nonEmptyLines.filter((line) => {
+      const cleaned = line.trim().replace(/^[•\-\*]\s*/, '');
+      return /^[\d\u00BC-\u00BE\u2150-\u215E]/.test(cleaned);
+    }).length;
+
+    const isIngredientsParagraph = numberedCount / nonEmptyLines.length > 0.5;
+
+    if (!isIngredientsParagraph) {
+      return paragraph;
+    }
+
+    return lines
+      .map((line) => {
+        const trimmed = line.trim();
+        if (!trimmed) return '';
+        const cleaned = trimmed.replace(/^[•\-\*]\s*/, '');
+        return `- ${cleaned}`;
+      })
+      .join('\n');
+  });
+
+  return processedParagraphs.join('\n\n');
+}
+
 export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
   const folderId = options.folderId;
   const clientEmail = options.serviceAccountEmail;
@@ -102,7 +139,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
           const extracted = await extractor.extract(buffer);
           const text = extracted.getBody();
           if (text && text.trim().length > 0) {
-            return text;
+            return processDocIngredients(text);
           }
         } catch (err) {
           logger.debug(
