@@ -51,7 +51,7 @@ export function processDocIngredients(text: string): string {
         const trimmed = line.trim();
         if (!trimmed) return '';
         const cleaned = trimmed.replace(/^[•\-\*]\s*/, '');
-        return `- ${cleaned}`;
+        return `- [ ] ${cleaned}`;
       })
       .join('\n');
   });
