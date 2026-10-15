@@ -57,8 +57,8 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
         }),
       });
 
-      // Write-scoped client lazily initialized ONLY to convert legacy .doc files
-      // into temporary Google Docs (which are exported and deleted).
+      // Write-scoped client lazily initialized ONLY as a fallback to convert legacy .doc files
+      // into temporary Google Docs if word-extractor fails.
       let writeDrive: drive_v3.Drive | undefined;
       const getWriteDrive = () =>
         (writeDrive ??= google.drive({
@@ -91,11 +91,36 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
       };
 
       const docToMarkdown = async (fileId: string, name: string) => {
+        try {
+          const res = await drive.files.get(
+            { fileId, alt: 'media' },
+            { responseType: 'arraybuffer' },
+          );
+          const buffer = Buffer.from(res.data as ArrayBuffer);
+          const WordExtractor = (await import('word-extractor')).default;
+          const extractor = new WordExtractor();
+          const extracted = await extractor.extract(buffer);
+          const text = extracted.getBody();
+          if (text && text.trim().length > 0) {
+            return text;
+          }
+        } catch (err) {
+          logger.debug(
+            `word-extractor failed for "${name}" (${fileId}): ${err instanceof Error ? err.message : err}`,
+          );
+        }
+
+        // Fallback to Drive API copy-convert if word-extractor is unable to parse
         const wd = getWriteDrive();
         const copy = await wd.files.copy({
           fileId,
-          requestBody: { name: `tmp-convert-${name}`, mimeType: MIME.gdoc },
+          requestBody: {
+            name: `tmp-convert-${name}`,
+            mimeType: MIME.gdoc,
+            parents: [folderId],
+          },
           fields: 'id',
+          supportsAllDrives: true,
         });
         const tempId = copy.data.id;
         if (!tempId) {
@@ -104,7 +129,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
         try {
           return await exportGoogleDocAsMarkdown(wd, tempId);
         } finally {
-          await wd.files.delete({ fileId: tempId }).catch((e) =>
+          await wd.files.delete({ fileId: tempId, supportsAllDrives: true }).catch((e) =>
             logger.warn(`Could not delete temp conversion file ${tempId}: ${e?.message ?? e}`),
           );
         }

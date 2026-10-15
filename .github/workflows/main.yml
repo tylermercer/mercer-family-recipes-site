@@ -99,6 +99,7 @@ jobs:
           echo "datetime=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
 
       - name: Deploy to Cloudflare (main)
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         id: deploy-main
         run: npx wrangler deploy
         env:
@@ -106,6 +107,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy to Cloudflare (pull request)
+        if: github.event_name == 'pull_request'
         id: deploy-pr
         run: npx wrangler preview --name=${{ steps.extract_vars.outputs.slugified_branch }}
         env:

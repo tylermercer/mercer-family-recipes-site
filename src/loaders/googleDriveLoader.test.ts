@@ -1,5 +1,22 @@
+// @vitest-environment node
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { googleDriveLoader } from './googleDriveLoader';
+
+// Mock word-extractor using a class
+vi.mock('word-extractor', () => {
+  return {
+    default: class MockWordExtractor {
+      async extract(buffer: Buffer) {
+        if (buffer.toString() === 'corrupted-doc-buffer') {
+          throw new Error('WordExtractor parse error');
+        }
+        return {
+          getBody: () => '# Converted DOC Text Content',
+        };
+      }
+    },
+  };
+});
 
 // Mock mammoth and turndown
 vi.mock('mammoth', () => ({
@@ -167,7 +184,7 @@ describe('googleDriveLoader', () => {
     expect(mockLogger.warn).toHaveBeenCalledWith('No documents found in the specified folder or its subfolders.');
   });
 
-  it('traverses folders and loads Google Doc, .docx, and .doc files', async () => {
+  it('traverses folders and loads Google Doc, .docx, and .doc files using word-extractor', async () => {
     mockList.mockImplementation(async ({ q }) => {
       // Subfolder query
       if (q.includes("mimeType = 'application/vnd.google-apps.folder'")) {
@@ -226,12 +243,6 @@ describe('googleDriveLoader', () => {
       return { data: new ArrayBuffer(8) };
     });
 
-    mockCopy.mockImplementation(async ({ requestBody }) => {
-      return { data: { id: 'temp-copy-id-123' } };
-    });
-
-    mockDelete.mockResolvedValue({});
-
     const loader = googleDriveLoader({
       folderId: 'root-folder',
       serviceAccountEmail: 'service-account@test.com',
@@ -288,13 +299,8 @@ describe('googleDriveLoader', () => {
       },
     });
 
-    // 3. .doc file (copied, converted, exported, deleted)
-    expect(mockCopy).toHaveBeenCalledWith({
-      fileId: 'doc-legacy-3',
-      requestBody: { name: 'tmp-convert-Apple Pie.doc', mimeType: 'application/vnd.google-apps.document' },
-      fields: 'id',
-    });
-    expect(mockDelete).toHaveBeenCalledWith({ fileId: 'temp-copy-id-123' });
+    // 3. .doc file parsed with word-extractor (no copy needed)
+    expect(mockGet).toHaveBeenCalledWith({ fileId: 'doc-legacy-3', alt: 'media' }, { responseType: 'arraybuffer' });
     expect(mockParseData).toHaveBeenCalledWith({
       id: 'apple-pie',
       data: {
@@ -306,6 +312,69 @@ describe('googleDriveLoader', () => {
 
     expect(mockStore.set).toHaveBeenCalledTimes(3);
     expect(mockLogger.info).toHaveBeenCalledWith('3/3 documents loaded into Content Layer!');
+  });
+
+  it('falls back to Drive API copy-convert if word-extractor fails on a .doc file', async () => {
+    mockList.mockImplementation(async ({ q }) => {
+      if (q.includes("mimeType = 'application/vnd.google-apps.folder'")) {
+        return { data: { files: [] } };
+      }
+      return {
+        data: {
+          files: [
+            {
+              id: 'doc-corrupt',
+              name: 'Tricky.doc',
+              mimeType: 'application/msword',
+            },
+          ],
+        },
+      };
+    });
+
+    mockGet.mockResolvedValue({ data: Buffer.from('corrupted-doc-buffer') });
+    mockCopy.mockResolvedValue({ data: { id: 'temp-copy-id-999' } });
+    mockExport.mockResolvedValue({ data: '# Fallback Content' });
+    mockDelete.mockResolvedValue({});
+
+    const loader = googleDriveLoader({
+      folderId: 'folder',
+      serviceAccountEmail: 'email@test.com',
+      privateKey: 'key',
+    });
+
+    const mockLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+    const mockStore = { clear: vi.fn(), set: vi.fn() };
+
+    await loader.load({
+      store: mockStore as any,
+      logger: mockLogger as any,
+      parseData: vi.fn().mockImplementation(async ({ id, data }) => data),
+      renderMarkdown: vi.fn().mockResolvedValue('html'),
+      meta: {} as any,
+      generateDigest: vi.fn() as any,
+      config: {} as any,
+      cache: {} as any,
+      watcher: {} as any,
+    });
+
+    expect(mockLogger.debug).toHaveBeenCalledWith(
+      expect.stringContaining('word-extractor failed for "Tricky.doc"')
+    );
+
+    expect(mockCopy).toHaveBeenCalledWith({
+      fileId: 'doc-corrupt',
+      requestBody: {
+        name: 'tmp-convert-Tricky.doc',
+        mimeType: 'application/vnd.google-apps.document',
+        parents: ['folder'],
+      },
+      fields: 'id',
+      supportsAllDrives: true,
+    });
+
+    expect(mockDelete).toHaveBeenCalledWith({ fileId: 'temp-copy-id-999', supportsAllDrives: true });
+    expect(mockStore.set).toHaveBeenCalledTimes(1);
   });
 
   it('handles duplicate titles/slugs gracefully', async () => {
