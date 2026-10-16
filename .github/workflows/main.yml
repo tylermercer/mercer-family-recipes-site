@@ -101,7 +101,7 @@ jobs:
       - name: Deploy to Cloudflare (main)
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         id: deploy-main
-        run: npx wrangler deploy
+        run: npx wrangler deploy --strict
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
