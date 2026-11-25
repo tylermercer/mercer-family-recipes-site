@@ -536,6 +536,59 @@ describe('googleDriveLoader', () => {
     expect(mockLogger.info).toHaveBeenCalledWith('1/2 documents loaded into Content Layer!');
   });
 
+  it('rewrites links to other docs in the folder into internal links', async () => {
+    mockList.mockImplementation(async ({ q }) => {
+      if (q.includes("mimeType = 'application/vnd.google-apps.folder'")) return { data: { files: [] } };
+      return {
+        data: {
+          files: [
+            { id: 'frosting-id', name: 'Frosting', mimeType: 'application/vnd.google-apps.document' },
+            { id: 'cake-id', name: 'Cake', mimeType: 'application/vnd.google-apps.document' },
+            { id: 'broken-id', name: 'Broken', mimeType: 'application/vnd.google-apps.document' },
+          ],
+        },
+      };
+    });
+
+    mockExport.mockImplementation(async ({ fileId }) => {
+      if (fileId === 'broken-id') throw new Error('export failed');
+      if (fileId === 'frosting-id') {
+        // Links to a doc listed later in the folder, plus a doc that fails to load.
+        return {
+          data:
+            'Use on [the cake](https://docs.google.com/document/d/cake-id/edit) or ' +
+            '[this](https://docs.google.com/document/d/broken-id/edit).',
+        };
+      }
+      return { data: 'Top with https://docs.google.com/document/d/frosting-id/edit' };
+    });
+
+    const loader = googleDriveLoader({
+      folderId: 'folder',
+      serviceAccountEmail: 'email@test.com',
+      privateKey: 'key',
+    });
+
+    const mockRenderMarkdown = vi.fn().mockResolvedValue({ html: '' });
+
+    await loader.load({
+      store: { clear: vi.fn(), set: vi.fn() } as any,
+      logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } as any,
+      parseData: vi.fn().mockImplementation(async ({ data }) => data),
+      renderMarkdown: mockRenderMarkdown,
+      meta: {} as any,
+      generateDigest: vi.fn() as any,
+      config: {} as any,
+      cache: {} as any,
+      watcher: {} as any,
+    });
+
+    expect(mockRenderMarkdown).toHaveBeenCalledWith(
+      'Use on [the cake](/cake) or [this](https://docs.google.com/document/d/broken-id/edit).',
+    );
+    expect(mockRenderMarkdown).toHaveBeenCalledWith('Top with [Frosting](/frosting)');
+  });
+
   it('catches and logs top-level API errors', async () => {
     mockList.mockRejectedValue(new Error('API quota exceeded'));
 

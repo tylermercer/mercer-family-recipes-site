@@ -2,6 +2,7 @@ import type { Loader } from 'astro/loaders';
 import { google, type drive_v3 } from 'googleapis';
 import mammoth from 'mammoth';
 import TurndownService from 'turndown';
+import { rewriteDriveLinks, type LinkedDoc } from './rewriteDriveLinks';
 
 export interface GoogleDriveLoaderOptions {
   folderId: string;
@@ -188,18 +189,29 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
         return results;
       };
 
+      const convertToMarkdown = async (file: drive_v3.Schema$File & { id: string; name: string }) => {
+        switch (file.mimeType) {
+          case MIME.gdoc:
+            return exportGoogleDocAsMarkdown(drive, file.id);
+          case MIME.docx:
+            return docxToMarkdown(file.id);
+          case MIME.doc:
+            return docToMarkdown(file.id, file.name);
+          default:
+            return undefined;
+        }
+      };
+
       try {
         store.clear();
 
+        // Pass 1: walk the folder tree and collect every supported document.
         const foldersToProcess: string[] = [folderId];
-        const seenIds = new Set<string>();
-        let totalDocsFound = 0;
-        let totalLoaded = 0;
+        const allFiles: (drive_v3.Schema$File & { id: string; name: string })[] = [];
 
         while (foldersToProcess.length > 0) {
           const currentFolderId = foldersToProcess.shift()!;
 
-          // 1. Subfolders
           const subfolders = await listAll(
             `'${currentFolderId}' in parents and mimeType = '${MIME.folder}' and trashed = false`,
             'id, name',
@@ -210,69 +222,84 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
             }
           }
 
-          // 2. Google Docs + .docx + .doc
           const files = await listAll(
             `'${currentFolderId}' in parents and trashed = false and (` +
               `mimeType = '${MIME.gdoc}' or mimeType = '${MIME.docx}' or mimeType = '${MIME.doc}')`,
             'id, name, mimeType, modifiedTime, webViewLink',
           );
-          totalDocsFound += files.length;
-
           for (const file of files) {
-            if (!file.id || !file.name) continue;
-
-            try {
-              let markdown: string;
-              switch (file.mimeType) {
-                case MIME.gdoc:
-                  markdown = await exportGoogleDocAsMarkdown(drive, file.id);
-                  break;
-                case MIME.docx:
-                  markdown = await docxToMarkdown(file.id);
-                  break;
-                case MIME.doc:
-                  markdown = await docToMarkdown(file.id, file.name);
-                  break;
-                default:
-                  continue;
-              }
-
-              const renderedContent = await renderMarkdown(markdown);
-
-              const title = file.name.replace(/\.docx?$/i, '') || file.name;
-              let id = title
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/(^-|-$)+/g, '');
-
-              if (!id || seenIds.has(id)) {
-                id = `${id ? id + '-' : ''}${file.id.slice(0, 8)}`;
-              }
-              seenIds.add(id);
-
-              const rawData = {
-                title,
-                lastModified: file.modifiedTime ? new Date(file.modifiedTime) : new Date(),
-                driveUrl:
-                  file.webViewLink ||
-                  (file.mimeType === MIME.gdoc
-                    ? `https://docs.google.com/document/d/${file.id}/edit`
-                    : `https://drive.google.com/file/d/${file.id}/view`),
-              };
-
-              const parsedData = await parseData({ id, data: rawData });
-
-              store.set({
-                id,
-                data: parsedData,
-                rendered: renderedContent,
-              });
-              totalLoaded++;
-            } catch (err) {
-              logger.error(
-                `Failed to load "${file.name}": ${err instanceof Error ? err.message : err}`,
-              );
+            if (file.id && file.name) {
+              allFiles.push(file as drive_v3.Schema$File & { id: string; name: string });
             }
+          }
+        }
+
+        const totalDocsFound = allFiles.length;
+
+        // Pass 2: convert each document to markdown and assign its slug. Slugs are assigned only
+        // to documents that converted, so links never point at a page that doesn't exist.
+        const seenIds = new Set<string>();
+        const converted: {
+          file: drive_v3.Schema$File & { id: string; name: string };
+          id: string;
+          title: string;
+          markdown: string;
+        }[] = [];
+        const docsByFileId = new Map<string, LinkedDoc>();
+
+        for (const file of allFiles) {
+          try {
+            const markdown = await convertToMarkdown(file);
+            if (markdown === undefined) continue;
+
+            const title = file.name.replace(/\.docx?$/i, '') || file.name;
+            let id = title
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/(^-|-$)+/g, '');
+
+            if (!id || seenIds.has(id)) {
+              id = `${id ? id + '-' : ''}${file.id.slice(0, 8)}`;
+            }
+            seenIds.add(id);
+
+            converted.push({ file, id, title, markdown });
+            docsByFileId.set(file.id, { id, title });
+          } catch (err) {
+            logger.error(
+              `Failed to load "${file.name}": ${err instanceof Error ? err.message : err}`,
+            );
+          }
+        }
+
+        // Pass 3: rewrite links between recipes into internal links, then render and store.
+        let totalLoaded = 0;
+        for (const { file, id, title, markdown } of converted) {
+          try {
+            const renderedContent = await renderMarkdown(rewriteDriveLinks(markdown, docsByFileId));
+
+            const rawData = {
+              title,
+              lastModified: file.modifiedTime ? new Date(file.modifiedTime) : new Date(),
+              driveUrl:
+                file.webViewLink ||
+                (file.mimeType === MIME.gdoc
+                  ? `https://docs.google.com/document/d/${file.id}/edit`
+                  : `https://drive.google.com/file/d/${file.id}/view`),
+            };
+
+            const parsedData = await parseData({ id, data: rawData });
+
+            store.set({
+              id,
+              data: parsedData,
+              rendered: renderedContent,
+            });
+            totalLoaded++;
+          } catch (err) {
+            logger.error(
+              `Failed to load "${file.name}": ${err instanceof Error ? err.message : err}`,
+            );
           }
         }
 
