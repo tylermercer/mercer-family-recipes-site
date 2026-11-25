@@ -190,7 +190,7 @@ Every focusable element gets the same ring: `outline: 3px solid var(--color-focu
 | Variant | Fill | Text | Border | Hover |
 |---|---|---|---|---|
 | **Primary** (one per view, e.g. "Back to all recipes") | `--color-accent` | `--color-on-accent` | none | `--color-text` fill, `--color-bg` text (inverts) |
-| **Secondary** (keep awake, reset checklist, theme toggle) | `--color-accent-soft` | `--color-text` | none | `--color-accent` fill, `--color-on-accent` text |
+| **Secondary** (keep awake, copy ingredient list, reset checklist, theme toggle) | `--color-accent-soft` | `--color-text` | none | `--color-accent` fill, `--color-on-accent` text |
 | **Danger** | `--color-danger` | `--color-bg` | none | `--color-text` fill, `--color-bg` text |
 
 Use the heading face at 700 weight with `--step--1`/`--step-0` sizes, and padding `var(--space-2xs) var(--space-s)`. Leave text in sentence case. Use **no transition on color**: the state change should be instant and crisp. Disabled buttons: `opacity: 0.55`, `cursor: not-allowed`, no hover change.
@@ -278,7 +278,7 @@ Recipes get printed, so print gets real styles (adapted from Innerhelm):
 
 - White background and black text, ignoring the theme.
 - Links print in black with the URL hidden.
-- Hide the nav, search, keep-awake, reset checklist, theme toggle, "See also", and tag chips.
+- Hide the nav, search, keep-awake, copy ingredient list, reset checklist, theme toggle, "See also", and tag chips.
 - Show checkboxes as empty 2px squares so a printed recipe works as a checklist.
 - Keep each `h2` with its list (`break-after: avoid-page`), and avoid breaking inside list items.
 

@@ -1,0 +1,73 @@
+---
+// Copies the recipe's ingredient checklists as plain text. Hidden until the script finds a
+// checklist and the Clipboard API, so it never shows as a dead button.
+---
+
+<button id="copy-ingredients-btn" type="button" class="button-secondary copy-ingredients" data-state="idle" hidden>
+  <!-- All labels share one grid cell so the button keeps its width when the label changes. -->
+  <span data-label="idle">Copy ingredient list</span>
+  <span data-label="copied" aria-hidden="true">Copied!</span>
+  <span data-label="failed" aria-hidden="true">Couldn't copy</span>
+</button>
+<span id="copy-ingredients-status" class="u-sr-only" role="status"></span>
+
+<script>
+  import { ingredientListText } from '@utils/ingredientListText';
+
+  const RESET_AFTER_MS = 2000;
+
+  function initCopyIngredients() {
+    const button = document.querySelector<HTMLButtonElement>('#copy-ingredients-btn');
+    const status = document.querySelector('#copy-ingredients-status');
+    const content = document.querySelector('.e-content');
+    if (!button || !status || !content || !navigator.clipboard?.writeText) return;
+    if (!ingredientListText(content)) return;
+
+    button.hidden = false;
+    let resetTimer: number | undefined;
+
+    function show(state: 'copied' | 'failed') {
+      button!.dataset.state = state;
+      status!.textContent = button!.querySelector(`[data-label="${state}"]`)?.textContent ?? '';
+      window.clearTimeout(resetTimer);
+      resetTimer = window.setTimeout(() => {
+        button!.dataset.state = 'idle';
+        status!.textContent = '';
+      }, RESET_AFTER_MS);
+    }
+
+    button.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(ingredientListText(content));
+        show('copied');
+      } catch (e) {
+        console.error('Failed to copy the ingredient list', e);
+        show('failed');
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCopyIngredients);
+  } else {
+    initCopyIngredients();
+  }
+</script>
+
+<style>
+  .copy-ingredients {
+    display: inline-grid;
+    place-items: center;
+  }
+
+  .copy-ingredients > [data-label] {
+    grid-area: 1 / 1;
+    visibility: hidden;
+  }
+
+  .copy-ingredients[data-state='idle'] > [data-label='idle'],
+  .copy-ingredients[data-state='copied'] > [data-label='copied'],
+  .copy-ingredients[data-state='failed'] > [data-label='failed'] {
+    visibility: visible;
+  }
+</style>
