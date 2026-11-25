@@ -113,7 +113,7 @@ Theme switching keeps the existing mechanism: the system preference by default, 
 }
 ```
 
-Also set `<meta name="theme-color">` to `--color-bg` for each scheme, so mobile browser chrome matches the page.
+Also set `<meta name="theme-color">` to `--color-bg` for each scheme, so mobile browser chrome matches the page. When the theme toggle pins a theme, both tags switch to that theme's color (`syncThemeColorMeta`).
 
 ---
 

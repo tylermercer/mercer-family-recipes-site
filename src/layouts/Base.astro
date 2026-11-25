@@ -5,6 +5,9 @@ import '@styles/index.scss';
 import ThemeToggle from '@components/ThemeToggle.astro';
 
 const title = "Family Recipes";
+
+// --color-bg for each theme (src/styles/theme.scss).
+const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 ---
 <!doctype html>
 <html lang="en">
@@ -13,18 +16,30 @@ const title = "Family Recipes";
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
-		<!-- Browser chrome matches --color-bg in each theme (see DESIGN.md). -->
-		<meta name="theme-color" content="#FFFDF7" media="(prefers-color-scheme: light)" />
-		<meta name="theme-color" content="#14110C" media="(prefers-color-scheme: dark)" />
+		<!--
+			Browser chrome matches --color-bg in each theme (see DESIGN.md). The media queries follow
+			the system setting; the script below and ThemeToggle (via syncThemeColorMeta) point both
+			tags at the pinned theme's color when there's an override.
+		-->
+		<meta name="theme-color" content={themeColors.light} media="(prefers-color-scheme: light)"
+			data-scheme="light" data-theme-color-light={themeColors.light} data-theme-color-dark={themeColors.dark} />
+		<meta name="theme-color" content={themeColors.dark} media="(prefers-color-scheme: dark)"
+			data-scheme="dark" data-theme-color-light={themeColors.light} data-theme-color-dark={themeColors.dark} />
 		<title>{title}</title>
 		<script is:inline>
 			(function () {
 				const stored = localStorage.getItem('theme');
-				if (stored === 'light' || stored === 'dark') {
-					document.documentElement.setAttribute('data-theme', stored);
+				const theme = stored === 'light' || stored === 'dark' ? stored : null;
+				if (theme) {
+					document.documentElement.setAttribute('data-theme', theme);
 				} else {
 					document.documentElement.removeAttribute('data-theme');
 				}
+				// Same as syncThemeColorMeta (src/utils), inlined for first paint.
+				document.querySelectorAll('meta[name="theme-color"][data-scheme]').forEach(function (meta) {
+					const color = meta.getAttribute('data-theme-color-' + (theme || meta.dataset.scheme));
+					if (color) meta.content = color;
+				});
 			})();
 		</script>
 	</head>

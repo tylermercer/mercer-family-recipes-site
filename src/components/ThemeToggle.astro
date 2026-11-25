@@ -17,6 +17,7 @@
 
 <script>
 	import { nextThemeOverride, type Theme } from '@utils/nextThemeOverride';
+	import { syncThemeColorMeta } from '@utils/syncThemeColorMeta';
 
 	const THEME_KEY = 'theme';
 
@@ -31,6 +32,7 @@
 		} else {
 			document.documentElement.removeAttribute('data-theme');
 		}
+		syncThemeColorMeta(theme);
 	}
 
 	function handleToggleClick() {
