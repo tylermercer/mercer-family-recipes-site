@@ -2,6 +2,8 @@
 
 A cleaner, high-contrast look for the recipe site, built around a **yellow-orange** accent and **high legibility**, with light and dark themes. It builds on the [design principles distilled from Innerhelm and the personal website](./2026-11-25-design-principles.md).
 
+A visual preview of the tokens and core components in both themes is in [`2026-11-25-style-guide-preview.html`](./2026-11-25-style-guide-preview.html) (screenshot: [`2026-11-25-style-guide-preview.png`](./2026-11-25-style-guide-preview.png)).
+
 ## Goals
 
 1. **Readable mid-task.** People use this site while cooking: a phone propped up across the counter, flour on their hands, a quick glance between steps. Text is large, high-contrast, and set in a typeface designed for legibility.
