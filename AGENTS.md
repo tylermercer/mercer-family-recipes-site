@@ -1,5 +1,9 @@
 # Agent Instructions
 
+## Design System
+
+`DESIGN.md` is the site's style guide: color tokens (light and dark), typography, spacing, and component rules. Follow it for any UI change. Use the `--color-*` tokens rather than raw colors, keep corners square, add no shadows, and only add borders where the guide allows them. Any new color pairing must meet the contrast targets listed there.
+
 ## tsconfig.json Import Aliases
 
 The `tsconfig.json` file defines import aliases for cleaner and more maintainable import paths. When working with imports, prefer using these aliases:
