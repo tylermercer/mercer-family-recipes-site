@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Style guide preview — Mercer Family Recipes</title>
+<!-- Preview only: fonts from the Fontsource CDN. The site would self-host the same packages. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/atkinson-hyperlegible-next@5/index.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/figtree@5/index.css">
+<style>
+  /* Tokens exactly as in 2026-11-25-style-guide.md */
+  .theme-light {
+    color-scheme: light;
+    --color-bg: #FFFDF7; --color-surface: #FAF3E3; --color-text: #17130C; --color-text-muted: #4D4536;
+    --color-border: #17130C; --color-rule: #8C8270; --color-accent: #F5A70A; --color-on-accent: #17130C;
+    --color-accent-strong: #A86400; --color-accent-soft: #FFE9B8; --color-link: #764000;
+    --color-link-hover: #4A2800; --color-focus: #17130C; --color-danger: #9E002D;
+  }
+  .theme-dark {
+    color-scheme: dark;
+    --color-bg: #14110C; --color-surface: #211C14; --color-text: #F7F1E4; --color-text-muted: #CFC4AE;
+    --color-border: #F7F1E4; --color-rule: #7A705E; --color-accent: #FFB51F; --color-on-accent: #14110C;
+    --color-accent-strong: #FFB51F; --color-accent-soft: #3D2C0A; --color-link: #FFC24D;
+    --color-link-hover: #FFE0A3; --color-focus: #FFB51F; --color-danger: #FF8FA6;
+  }
+  :root {
+    --font-body: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
+    --font-heading: 'Figtree Variable', Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: var(--font-body); font-size: 19px; line-height: 1.6; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; }
+  .panel { background: var(--color-bg); color: var(--color-text); padding: 32px 36px 40px; }
+  .panel > * + * { margin-top: 28px; }
+  .panel-label { font: 700 13px/1 var(--font-heading); letter-spacing: .08em; text-transform: uppercase;
+    color: var(--color-text-muted); border-bottom: 1px solid var(--color-rule); padding-bottom: 10px; }
+  h1, h2, h3, summary { font-family: var(--font-heading); margin: 0; }
+  h1 { font-size: 40px; font-weight: 800; line-height: 1.1; text-wrap: balance; }
+  h2 { font-size: 26px; font-weight: 750; line-height: 1.2; border-left: 3px solid var(--color-accent-strong); padding-left: .5em; }
+  p { margin: 0; }
+  .meta { font: 600 15px/1.4 var(--font-heading); color: var(--color-text-muted); margin-top: 6px; }
+  a { color: var(--color-link); text-decoration-thickness: max(1px, .08em); text-underline-offset: .18em; }
+  a:hover { color: var(--color-link-hover); text-decoration-thickness: 2px; }
+
+  /* Swatches */
+  .swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .swatch { border: 2px solid var(--color-border); }
+  .swatch .chip { height: 46px; border-bottom: 2px solid var(--color-border); }
+  .swatch .info { padding: 6px 8px; font: 600 12px/1.35 var(--font-heading); }
+  .swatch .info span { display: block; color: var(--color-text-muted); font-weight: 500; }
+
+  /* Buttons */
+  .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .btn { font: 700 16px/1 var(--font-heading); padding: 12px 18px; border: 2px solid var(--color-border);
+    border-radius: 0; background: transparent; color: var(--color-text); cursor: pointer; min-height: 44px; }
+  .btn-primary { background: var(--color-accent); color: var(--color-on-accent); }
+  .btn-primary:hover { background: var(--color-text); color: var(--color-bg); }
+  .btn-secondary:hover { background: var(--color-accent-soft); }
+  .btn-danger { color: var(--color-danger); border-color: var(--color-danger); }
+  .btn.focus { outline: 3px solid var(--color-focus); outline-offset: 2px; }
+
+  /* Search input */
+  .search { display: flex; align-items: center; gap: 10px; border: 2px solid var(--color-border);
+    background: var(--color-bg); padding: 10px 14px; min-height: 48px; color: var(--color-text-muted); }
+  .search kbd { margin-left: auto; font: 600 12px/1 var(--font-heading); border: 1px solid var(--color-rule); padding: 4px 6px; }
+
+  /* Checklist */
+  .checklist { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--color-rule); }
+  .checklist li { display: flex; gap: 14px; align-items: center; min-height: 48px; padding: 6px 10px;
+    border-bottom: 1px solid var(--color-rule); font-variant-numeric: tabular-nums lining-nums; }
+  .box { flex: none; width: 1.25em; height: 1.25em; border: 2px solid var(--color-border); display: grid; place-items: center; }
+  .done { background: var(--color-accent-soft); }
+  .done .box { background: var(--color-accent); }
+  .done .box::after { content: ''; width: .35em; height: .65em; border: solid var(--color-on-accent);
+    border-width: 0 3px 3px 0; transform: translateY(-2px) rotate(45deg); }
+  .done .text { text-decoration: line-through; text-decoration-color: var(--color-accent-strong); text-decoration-thickness: 2px; }
+  .qty { font-weight: 700; }
+
+  /* Steps */
+  ol.steps { margin: 0; padding-left: 1.6em; }
+  ol.steps li::marker { font: 700 1em var(--font-heading); color: var(--color-accent-strong); }
+  ul.square { margin-bottom: 0; padding-left: 1.3em; list-style: square; }
+  ul.square li::marker { color: var(--color-accent-strong); }
+
+  /* Recipe rows */
+  .rows { border-top: 1px solid var(--color-rule); }
+  .recipe-row { padding: 12px 10px; border-bottom: 1px solid var(--color-rule); }
+  .recipe-row.hover { background: var(--color-accent-soft); }
+  .recipe-row .title { font: 700 22px/1.25 var(--font-heading); color: var(--color-text); text-decoration: none; }
+  .badge { font: 600 12px/1 var(--font-heading); border: 2px solid var(--color-border); padding: 3px 6px;
+    letter-spacing: .04em; text-transform: uppercase; margin-left: 8px; vertical-align: 3px; }
+
+  /* Chips */
+  .chip-link { font: 600 15px/1 var(--font-heading); color: var(--color-text); text-decoration: none;
+    border: 2px solid var(--color-border); padding: 8px 12px; display: inline-block; }
+  .chip-link.active { background: var(--color-accent); color: var(--color-on-accent); }
+  .chip-link.hover { background: var(--color-accent-soft); }
+
+  /* Details */
+  details { border-left: 3px solid var(--color-accent-strong); padding-left: 14px; }
+  summary { font-size: 21px; font-weight: 700; cursor: pointer; list-style: none; }
+  summary::before { content: '▾ '; color: var(--color-accent-strong); }
+  details > div { margin-top: 10px; }
+
+  blockquote { margin: 0; background: var(--color-surface); border-left: 3px solid var(--color-accent-strong); padding: 14px 16px; }
+</style>
+</head>
+<body>
+<div class="grid">
+  <!-- One panel per theme; identical markup. -->
+  <template id="panel">
+    <div class="panel-label"></div>
+
+    <section>
+      <div class="swatches">
+        <div class="swatch"><div class="chip" style="background:var(--color-bg)"></div><div class="info">bg<span data-var="--color-bg"></span></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--color-surface)"></div><div class="info">surface<span data-var="--color-surface"></span></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--color-text)"></div><div class="info">text<span data-var="--color-text"></span></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--color-text-muted)"></div><div class="info">text-muted<span data-var="--color-text-muted"></span></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--color-accent)"></div><div class="info">accent<span data-var="--color-accent"></span></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--color-accent-strong)"></div><div class="info">accent-strong<span data-var="--color-accent-strong"></span></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--color-accent-soft)"></div><div class="info">accent-soft<span data-var="--color-accent-soft"></span></div></div>
+        <div class="swatch"><div class="chip" style="background:var(--color-link)"></div><div class="info">link<span data-var="--color-link"></span></div></div>
+      </div>
+    </section>
+
+    <section>
+      <h1>Grandma's Blueberry Pie</h1>
+      <p class="meta">From <a href="#">Eve &amp; Tyler</a> • Last modified 11/25/2026 • <a href="#">View Google Doc</a></p>
+    </section>
+
+    <section class="row">
+      <span class="search">⌕ Search recipes <kbd>Ctrl K</kbd></span>
+    </section>
+
+    <section class="row">
+      <button class="btn btn-primary">← All recipes</button>
+      <button class="btn btn-secondary">Keep screen awake</button>
+      <button class="btn btn-secondary focus">Focused</button>
+      <button class="btn btn-danger">Reset</button>
+    </section>
+
+    <section>
+      <h2>Ingredients</h2>
+      <ul class="checklist" style="margin-top:12px">
+        <li class="done"><span class="box"></span><span class="text"><span class="qty">7 cups</span> blueberries</span></li>
+        <li class="done"><span class="box"></span><span class="text"><span class="qty">⅔ cup</span> granulated sugar</span></li>
+        <li><span class="box"></span><span class="text"><span class="qty">1 tsp</span> lemon zest (optional)</span></li>
+        <li><span class="box"></span><span class="text"><span class="qty">1</span> double-crust <a href="#">pie crust</a></span></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Steps</h2>
+      <ol class="steps" style="margin-top:12px">
+        <li>Preheat the oven to 425°F and thaw the dough.</li>
+        <li>Mix 6 cups of berries with the sugar, flour, and cornstarch.</li>
+      </ol>
+    </section>
+
+    <blockquote>Tip: bake on the lowest rack so the bottom crust browns.</blockquote>
+
+    <section class="rows">
+      <div class="recipe-row"><a class="title" href="#">African Peanut Stew</a>
+        <p class="meta">Dan &amp; Leanna • Last modified 3/2/2026</p></div>
+      <div class="recipe-row hover"><a class="title" href="#">Buffalo Chicken Sweet Potato Bake</a><span class="badge">WIP</span>
+        <p class="meta">Mom &amp; Dad • Last modified 8/10/2021</p></div>
+    </section>
+
+    <details open>
+      <summary>By tag</summary>
+      <div class="row">
+        <a class="chip-link active" href="#">#dessert</a>
+        <a class="chip-link hover" href="#">#gluten free</a>
+        <a class="chip-link" href="#">#slow cooker</a>
+      </div>
+    </details>
+
+    <ul class="square">
+      <li>Square bullets with accent markers</li>
+      <li>Body text is <a href="#">always underlined when linked</a></li>
+    </ul>
+  </template>
+
+  <div class="panel theme-light" data-label="Light"></div>
+  <div class="panel theme-dark" data-label="Dark"></div>
+</div>
+<script>
+  const tpl = document.getElementById('panel');
+  for (const panel of document.querySelectorAll('.panel')) {
+    panel.append(tpl.content.cloneNode(true));
+    panel.querySelector('.panel-label').textContent = panel.dataset.label + ' theme';
+    const styles = getComputedStyle(panel);
+    for (const el of panel.querySelectorAll('[data-var]')) {
+      el.textContent = styles.getPropertyValue(el.dataset.var).trim();
+    }
+  }
+</script>
+</body>
+</html>
