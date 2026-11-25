@@ -1,6 +1,10 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { googleDriveLoader, processDocIngredients } from './googleDriveLoader';
+import {
+  contributorForFolder,
+  googleDriveLoader,
+  processDocIngredients,
+} from './googleDriveLoader';
 
 // Mock word-extractor using a class
 vi.mock('word-extractor', () => {
@@ -121,6 +125,22 @@ Step 2: Mix flour and sugar.
 Enjoy!`;
 
     expect(processDocIngredients(input)).toBe(input);
+  });
+});
+
+describe('contributorForFolder', () => {
+  it('maps the root folder to Mom & Dad', () => {
+    expect(contributorForFolder(undefined)).toBe('Mom & Dad');
+  });
+
+  it('maps known first-level folders to their contributors', () => {
+    expect(contributorForFolder('Leanna/Dan recipes')).toBe('Dan & Leanna');
+    expect(contributorForFolder('Eve&Tyler')).toBe('Eve & Tyler');
+  });
+
+  it('falls back to Mom & Dad for unmapped folders', () => {
+    expect(contributorForFolder('Misc')).toBe('Mom & Dad');
+    expect(contributorForFolder('')).toBe('Mom & Dad');
   });
 });
 
@@ -341,6 +361,7 @@ describe('googleDriveLoader', () => {
         title: "Grandma's Cookies",
         lastModified: new Date('2025-01-01T00:00:00Z'),
         driveUrl: 'https://docs.google.com/document/d/doc-gdoc-1/edit',
+        contributor: 'Mom & Dad',
         relatedRecipes: [],
       },
     });
@@ -353,6 +374,7 @@ describe('googleDriveLoader', () => {
         title: 'Chocolate Cake',
         lastModified: new Date('2025-01-02T00:00:00Z'),
         driveUrl: 'https://drive.google.com/file/d/doc-docx-2/view',
+        contributor: 'Mom & Dad',
         relatedRecipes: [],
       },
     });
@@ -365,6 +387,7 @@ describe('googleDriveLoader', () => {
         title: 'Apple Pie',
         lastModified: new Date('2025-01-03T00:00:00Z'),
         driveUrl: 'https://drive.google.com/file/d/doc-legacy-3/view',
+        contributor: 'Mom & Dad',
         relatedRecipes: [],
       },
     });
@@ -606,6 +629,56 @@ describe('googleDriveLoader', () => {
       id: 'cake',
       data: expect.objectContaining({ relatedRecipes: ['frosting'] }),
     });
+  });
+
+  it('sets contributor from the first-level folder, including for nested subfolders', async () => {
+    const subfolders: Record<string, { id: string; name: string }[]> = {
+      root: [{ id: 'et-folder', name: 'Eve&Tyler' }, { id: 'misc-folder', name: 'Misc' }],
+      'et-folder': [{ id: 'et-desserts', name: 'Desserts' }],
+    };
+    const docs: Record<string, { id: string; name: string; mimeType: string }[]> = {
+      root: [{ id: 'root-doc', name: 'Root Recipe', mimeType: 'application/vnd.google-apps.document' }],
+      'et-desserts': [{ id: 'et-doc', name: 'Nested Recipe', mimeType: 'application/vnd.google-apps.document' }],
+      'misc-folder': [{ id: 'misc-doc', name: 'Misc Recipe', mimeType: 'application/vnd.google-apps.document' }],
+    };
+    mockList.mockImplementation(async ({ q }) => {
+      const parent = q.match(/^'([^']+)' in parents/)[1];
+      const isFolderQuery = q.includes("mimeType = 'application/vnd.google-apps.folder'");
+      return { data: { files: (isFolderQuery ? subfolders : docs)[parent] ?? [] } };
+    });
+    mockExport.mockResolvedValue({ data: 'Body' });
+
+    const loader = googleDriveLoader({
+      folderId: 'root',
+      serviceAccountEmail: 'email@test.com',
+      privateKey: 'key',
+    });
+
+    const mockLogger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+    const mockParseData = vi.fn().mockImplementation(async ({ data }) => data);
+
+    await loader.load({
+      store: { clear: vi.fn(), set: vi.fn() } as any,
+      logger: mockLogger as any,
+      parseData: mockParseData,
+      renderMarkdown: vi.fn().mockResolvedValue({ html: '' }),
+      meta: {} as any,
+      generateDigest: vi.fn() as any,
+      config: {} as any,
+      cache: {} as any,
+      watcher: {} as any,
+    });
+
+    const contributorOf = (id: string) =>
+      mockParseData.mock.calls.find(([arg]) => arg.id === id)?.[0].data.contributor;
+    expect(contributorOf('root-recipe')).toBe('Mom & Dad');
+    expect(contributorOf('nested-recipe')).toBe('Eve & Tyler');
+    expect(contributorOf('misc-recipe')).toBe('Mom & Dad');
+
+    expect(mockLogger.info).toHaveBeenCalledWith('Folder "Eve&Tyler": 1 document(s) -> Eve & Tyler');
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      'Folder "Misc": 1 document(s) -> Mom & Dad (unmapped folder; add it to CONTRIBUTOR_BY_FOLDER)',
+    );
   });
 
   it('catches and logs top-level API errors', async () => {

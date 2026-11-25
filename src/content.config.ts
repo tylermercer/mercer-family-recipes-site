@@ -1,6 +1,6 @@
 import { defineCollection, reference } from 'astro:content';
 import { z } from "astro/zod";
-import { googleDriveLoader } from './loaders/googleDriveLoader';
+import { CONTRIBUTORS, googleDriveLoader } from './loaders/googleDriveLoader';
 
 const recipes = defineCollection({
   loader: googleDriveLoader({
@@ -12,6 +12,8 @@ const recipes = defineCollection({
     title: z.string(),
     lastModified: z.date(),
     driveUrl: z.string().optional(),
+    /** Who contributed the recipe, based on the Drive folder it's in. */
+    contributor: z.enum(CONTRIBUTORS),
     /** Recipes linked from this recipe's body, in order of first appearance. */
     relatedRecipes: z.array(reference('recipes')).default([]),
   }),

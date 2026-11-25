@@ -11,6 +11,34 @@ export interface GoogleDriveLoaderOptions {
   privateKey: string;
 }
 
+export const CONTRIBUTORS = [
+  'Mom & Dad',
+  'Dan & Leanna',
+  'Eve & Tyler',
+  'EJ & Liza',
+  'Russell',
+] as const;
+export type Contributor = (typeof CONTRIBUTORS)[number];
+
+const DEFAULT_CONTRIBUTOR: Contributor = 'Mom & Dad';
+
+/** Maps first-level Drive folder names to contributors. Docs in the root folder are Mom & Dad's. */
+export const CONTRIBUTOR_BY_FOLDER: Record<string, Contributor> = {
+  'Leanna/Dan recipes': 'Dan & Leanna',
+  'Eve&Tyler': 'Eve & Tyler',
+};
+
+/**
+ * Returns the contributor for a doc given the first-level folder it's under (undefined for the
+ * root folder). Unmapped folders fall back to Mom & Dad.
+ */
+export function contributorForFolder(topLevelFolder: string | undefined): Contributor {
+  if (topLevelFolder === undefined) return DEFAULT_CONTRIBUTOR;
+  return CONTRIBUTOR_BY_FOLDER[topLevelFolder] ?? DEFAULT_CONTRIBUTOR;
+}
+
+type DriveDoc = drive_v3.Schema$File & { id: string; name: string; topLevelFolder?: string };
+
 const MIME = {
   folder: 'application/vnd.google-apps.folder',
   gdoc: 'application/vnd.google-apps.document',
@@ -190,7 +218,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
         return results;
       };
 
-      const convertToMarkdown = async (file: drive_v3.Schema$File & { id: string; name: string }) => {
+      const convertToMarkdown = async (file: DriveDoc) => {
         switch (file.mimeType) {
           case MIME.gdoc:
             return exportGoogleDocAsMarkdown(drive, file.id);
@@ -207,11 +235,14 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
         store.clear();
 
         // Pass 1: walk the folder tree and collect every supported document.
-        const foldersToProcess: string[] = [folderId];
-        const allFiles: (drive_v3.Schema$File & { id: string; name: string })[] = [];
+        // topLevelFolder is the name of the first-level subfolder a folder sits under, or
+        // undefined for the root folder itself.
+        const foldersToProcess: { id: string; topLevelFolder?: string }[] = [{ id: folderId }];
+        const allFiles: DriveDoc[] = [];
+        const docsPerTopLevelFolder = new Map<string, number>();
 
         while (foldersToProcess.length > 0) {
-          const currentFolderId = foldersToProcess.shift()!;
+          const { id: currentFolderId, topLevelFolder } = foldersToProcess.shift()!;
 
           const subfolders = await listAll(
             `'${currentFolderId}' in parents and mimeType = '${MIME.folder}' and trashed = false`,
@@ -219,7 +250,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
           );
           for (const sf of subfolders) {
             if (sf.id) {
-              foldersToProcess.push(sf.id);
+              foldersToProcess.push({ id: sf.id, topLevelFolder: topLevelFolder ?? sf.name ?? '' });
             }
           }
 
@@ -230,9 +261,20 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
           );
           for (const file of files) {
             if (file.id && file.name) {
-              allFiles.push(file as drive_v3.Schema$File & { id: string; name: string });
+              allFiles.push({ ...file, id: file.id, name: file.name, topLevelFolder });
+              const key = topLevelFolder ?? '(root)';
+              docsPerTopLevelFolder.set(key, (docsPerTopLevelFolder.get(key) ?? 0) + 1);
             }
           }
+        }
+
+        for (const [folderName, count] of docsPerTopLevelFolder) {
+          const mapped = folderName === '(root)' || folderName in CONTRIBUTOR_BY_FOLDER;
+          const contributor = contributorForFolder(folderName === '(root)' ? undefined : folderName);
+          logger.info(
+            `Folder "${folderName}": ${count} document(s) -> ${contributor}` +
+              (mapped ? '' : ' (unmapped folder; add it to CONTRIBUTOR_BY_FOLDER)'),
+          );
         }
 
         const totalDocsFound = allFiles.length;
@@ -241,7 +283,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
         // to documents that converted, so links never point at a page that doesn't exist.
         const seenIds = new Set<string>();
         const converted: {
-          file: drive_v3.Schema$File & { id: string; name: string };
+          file: DriveDoc;
           id: string;
           title: string;
           markdown: string;
@@ -291,6 +333,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
                 (file.mimeType === MIME.gdoc
                   ? `https://docs.google.com/document/d/${file.id}/edit`
                   : `https://drive.google.com/file/d/${file.id}/view`),
+              contributor: contributorForFolder(file.topLevelFolder),
               relatedRecipes: linkedDocs.map((doc) => doc.id).filter((relatedId) => relatedId !== id),
             };
 
