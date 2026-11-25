@@ -16,21 +16,47 @@
 
 <style is:global>
 	/*
-	 * Pagefind sets its defaults on :root, unlayered. html:root outranks that, and pointing the
-	 * variables at the Radix scales makes search follow the site's light/dark theme.
+	 * Pagefind sets its defaults on :root, unlayered. html:root outranks that. Values follow
+	 * DESIGN.md: tokens for color, square corners, no shadows, and borders only on the inputs.
 	 */
 	html:root {
 		--pf-font: var(--font-body);
-		--pf-text: var(--gray-12);
-		--pf-text-secondary: var(--gray-11);
-		--pf-text-muted: var(--gray-11);
-		--pf-background: var(--gray-1);
-		--pf-border: var(--gray-7);
-		--pf-border-focus: var(--gray-8);
-		--pf-hover: var(--gray-3);
-		--pf-mark: var(--primary-11);
-		--pf-skeleton: var(--gray-3);
-		--pf-skeleton-shine: var(--gray-4);
-		--pf-outline-focus: var(--primary-8);
+		--pf-text: var(--color-text);
+		--pf-text-secondary: var(--color-text-muted);
+		--pf-text-muted: var(--color-text-muted);
+		--pf-background: var(--color-bg);
+		--pf-border: var(--color-border);
+		--pf-border-focus: var(--color-focus);
+		--pf-border-radius: 0;
+		--pf-hover: var(--color-accent-soft);
+		--pf-mark: var(--color-accent-strong);
+		--pf-outline-focus: var(--color-focus);
+		--pf-outline-width: 3px;
+		--pf-shadow-sm: none;
+		--pf-shadow-md: none;
+		--pf-shadow-lg: none;
+		--pf-skeleton: var(--color-surface);
+		--pf-skeleton-shine: var(--color-accent-soft);
+		--pf-scroll-shadow: transparent;
+	}
+
+	/* Borderless results: cards, chips, and footer separate by fill and spacing. */
+	pagefind-modal {
+		--pf-border: transparent;
+	}
+
+	/* The search field keeps a full-contrast edge: the trigger, and the input bar in the modal. */
+	pagefind-modal .pf-modal-header {
+		--pf-border: var(--color-border);
+	}
+
+	/* Pagefind hard-codes these radii instead of using --pf-border-radius. */
+	pagefind-modal :is(dialog.pf-modal, .pf-modal-close) {
+		border-radius: 0 !important;
+	}
+
+	pagefind-modal-trigger .pf-trigger-btn {
+		border-width: 2px !important;
+		font-family: var(--font-body);
 	}
 </style>
