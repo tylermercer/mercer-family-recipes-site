@@ -4,6 +4,7 @@ import mammoth from 'mammoth';
 import TurndownService from 'turndown';
 import { rewriteDriveLinks, type LinkedDoc } from './rewriteDriveLinks';
 import { stripLeadingH1 } from './stripLeadingH1';
+import { stripStrikethrough } from './stripStrikethrough';
 import { extractHashtags } from './extractHashtags';
 import type { Contributor } from '@utils/contributors';
 import { uniqueTags } from '@utils/tags';
@@ -327,7 +328,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
         for (const { file, id, title, markdown } of converted) {
           try {
             const { markdown: linkedMarkdown, linkedDocs } = rewriteDriveLinks(
-              stripLeadingH1(markdown),
+              stripLeadingH1(stripStrikethrough(markdown)),
               docsByFileId,
             );
             const renderedContent = await renderMarkdown(linkedMarkdown);

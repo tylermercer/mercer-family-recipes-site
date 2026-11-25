@@ -313,13 +313,6 @@
                 text-decoration-thickness: 2px;
             }
 
-            // Strikethrough from the source doc (usually left over from checking
-            // items off in Google Docs) would make unchecked rows look done.
-            // Only the checkbox state strikes a row through.
-            del {
-                text-decoration: none;
-            }
-
             // Notes nested under an ingredient keep normal bullets.
             ul {
                 cursor: auto;
