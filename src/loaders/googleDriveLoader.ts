@@ -3,6 +3,7 @@ import { google, type drive_v3 } from 'googleapis';
 import mammoth from 'mammoth';
 import TurndownService from 'turndown';
 import { rewriteDriveLinks, type LinkedDoc } from './rewriteDriveLinks';
+import { stripLeadingH1 } from './stripLeadingH1';
 
 export interface GoogleDriveLoaderOptions {
   folderId: string;
@@ -276,7 +277,9 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
         let totalLoaded = 0;
         for (const { file, id, title, markdown } of converted) {
           try {
-            const renderedContent = await renderMarkdown(rewriteDriveLinks(markdown, docsByFileId));
+            const renderedContent = await renderMarkdown(
+              rewriteDriveLinks(stripLeadingH1(markdown), docsByFileId),
+            );
 
             const rawData = {
               title,
