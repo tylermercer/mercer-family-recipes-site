@@ -2,6 +2,7 @@
 import { getCollection, getEntries, render } from 'astro:content';
 import Layout from '@layouts/Base.astro';
 import KeepAwakeToggle from '@components/KeepAwakeToggle.astro';
+import CopyIngredientsButton from '@components/CopyIngredientsButton.astro';
 import { contributorPath } from '@utils/contributorSlug';
 import { tagPath } from '@utils/tags';
 
@@ -79,6 +80,7 @@ if (!recipe.isMock) {
 			</header>
 			<div class="l-cluster l-space-2xs u-hide-on-print" data-pagefind-ignore>
 				<KeepAwakeToggle />
+				<CopyIngredientsButton />
 				<button id="reset-checklist-btn" type="button" class="button-secondary" hidden>
 					Reset checklist
 				</button>
