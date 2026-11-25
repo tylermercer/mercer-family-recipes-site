@@ -1,4 +1,4 @@
-import { defineCollection } from 'astro:content';
+import { defineCollection, reference } from 'astro:content';
 import { z } from "astro/zod";
 import { googleDriveLoader } from './loaders/googleDriveLoader';
 
@@ -12,6 +12,8 @@ const recipes = defineCollection({
     title: z.string(),
     lastModified: z.date(),
     driveUrl: z.string().optional(),
+    /** Recipes linked from this recipe's body, in order of first appearance. */
+    relatedRecipes: z.array(reference('recipes')).default([]),
   }),
 });
 

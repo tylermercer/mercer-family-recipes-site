@@ -341,6 +341,7 @@ describe('googleDriveLoader', () => {
         title: "Grandma's Cookies",
         lastModified: new Date('2025-01-01T00:00:00Z'),
         driveUrl: 'https://docs.google.com/document/d/doc-gdoc-1/edit',
+        relatedRecipes: [],
       },
     });
 
@@ -352,6 +353,7 @@ describe('googleDriveLoader', () => {
         title: 'Chocolate Cake',
         lastModified: new Date('2025-01-02T00:00:00Z'),
         driveUrl: 'https://drive.google.com/file/d/doc-docx-2/view',
+        relatedRecipes: [],
       },
     });
 
@@ -363,6 +365,7 @@ describe('googleDriveLoader', () => {
         title: 'Apple Pie',
         lastModified: new Date('2025-01-03T00:00:00Z'),
         driveUrl: 'https://drive.google.com/file/d/doc-legacy-3/view',
+        relatedRecipes: [],
       },
     });
 
@@ -560,7 +563,12 @@ describe('googleDriveLoader', () => {
             '[this](https://docs.google.com/document/d/broken-id/edit).',
         };
       }
-      return { data: 'Top with https://docs.google.com/document/d/frosting-id/edit' };
+      // Links to another doc and to itself; the self-link isn't a related recipe.
+      return {
+        data:
+          'Top with https://docs.google.com/document/d/frosting-id/edit, then ' +
+          'serve [more cake](https://docs.google.com/document/d/cake-id/edit).',
+      };
     });
 
     const loader = googleDriveLoader({
@@ -570,11 +578,12 @@ describe('googleDriveLoader', () => {
     });
 
     const mockRenderMarkdown = vi.fn().mockResolvedValue({ html: '' });
+    const mockParseData = vi.fn().mockImplementation(async ({ data }) => data);
 
     await loader.load({
       store: { clear: vi.fn(), set: vi.fn() } as any,
       logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } as any,
-      parseData: vi.fn().mockImplementation(async ({ data }) => data),
+      parseData: mockParseData,
       renderMarkdown: mockRenderMarkdown,
       meta: {} as any,
       generateDigest: vi.fn() as any,
@@ -586,7 +595,17 @@ describe('googleDriveLoader', () => {
     expect(mockRenderMarkdown).toHaveBeenCalledWith(
       'Use on [the cake](/cake) or [this](https://docs.google.com/document/d/broken-id/edit).',
     );
-    expect(mockRenderMarkdown).toHaveBeenCalledWith('Top with [Frosting](/frosting)');
+    expect(mockRenderMarkdown).toHaveBeenCalledWith(
+      'Top with [Frosting](/frosting), then serve [more cake](/cake).',
+    );
+    expect(mockParseData).toHaveBeenCalledWith({
+      id: 'frosting',
+      data: expect.objectContaining({ relatedRecipes: ['cake'] }),
+    });
+    expect(mockParseData).toHaveBeenCalledWith({
+      id: 'cake',
+      data: expect.objectContaining({ relatedRecipes: ['frosting'] }),
+    });
   });
 
   it('catches and logs top-level API errors', async () => {

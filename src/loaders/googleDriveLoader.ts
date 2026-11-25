@@ -277,9 +277,11 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
         let totalLoaded = 0;
         for (const { file, id, title, markdown } of converted) {
           try {
-            const renderedContent = await renderMarkdown(
-              rewriteDriveLinks(stripLeadingH1(markdown), docsByFileId),
+            const { markdown: linkedMarkdown, linkedDocs } = rewriteDriveLinks(
+              stripLeadingH1(markdown),
+              docsByFileId,
             );
+            const renderedContent = await renderMarkdown(linkedMarkdown);
 
             const rawData = {
               title,
@@ -289,6 +291,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
                 (file.mimeType === MIME.gdoc
                   ? `https://docs.google.com/document/d/${file.id}/edit`
                   : `https://drive.google.com/file/d/${file.id}/view`),
+              relatedRecipes: linkedDocs.map((doc) => doc.id).filter((relatedId) => relatedId !== id),
             };
 
             const parsedData = await parseData({ id, data: rawData });

@@ -1,5 +1,5 @@
 ---
-import { getCollection, render } from 'astro:content';
+import { getCollection, getEntries, render } from 'astro:content';
 import Layout from '@layouts/Base.astro';
 import KeepAwakeToggle from '@components/KeepAwakeToggle.astro';
 
@@ -31,9 +31,11 @@ export async function getStaticPaths() {
 
 const { recipe } = Astro.props;
 let Content = null;
+let relatedRecipes: Awaited<ReturnType<typeof getEntries<'recipes'>>> = [];
 if (!recipe.isMock) {
   const rendered = await render(recipe);
   Content = rendered.Content;
+  relatedRecipes = await getEntries(recipe.data.relatedRecipes ?? []);
 }
 ---
 
@@ -74,6 +76,16 @@ if (!recipe.isMock) {
 					</div>
 				)}
 			</div>
+			{relatedRecipes.length > 0 && (
+				<section class="l-space-s see-also" aria-labelledby="see-also-heading">
+					<h2 id="see-also-heading">See also</h2>
+					<ul>
+						{relatedRecipes.map((related) => (
+							<li><a href={`/${related.id}`}>{related.data.title}</a></li>
+						))}
+					</ul>
+				</section>
+			)}
 		</article>
 	</main>
 

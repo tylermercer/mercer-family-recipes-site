@@ -41,21 +41,33 @@ export function extractDriveFileId(rawUrl: string): string | undefined {
 const LINK_PATTERN =
   /(\]\()(<?)([^)\s>]+)(>?)((?:\s+"[^"]*")?\))|<(https?:\/\/[^>\s]+)>|(?<![(<\w])(https?:\/\/[^\s<>()\[\]]+[^\s<>()\[\].,;:!?'"])/g;
 
+export interface RewriteResult {
+  markdown: string;
+  /** Collection docs the markdown links to, deduplicated, in order of first appearance. */
+  linkedDocs: LinkedDoc[];
+}
+
 /**
  * Rewrites links that point at other documents in the collection (by Drive file id) into
  * internal site links (`/{id}`). Markdown links keep their text; autolinks and bare URLs become
  * markdown links labelled with the linked recipe's title. Links to documents that aren't in
  * the collection are left untouched.
  */
-export function rewriteDriveLinks(markdown: string, docsByFileId: Map<string, LinkedDoc>): string {
-  if (!markdown || docsByFileId.size === 0) return markdown;
+export function rewriteDriveLinks(
+  markdown: string,
+  docsByFileId: Map<string, LinkedDoc>,
+): RewriteResult {
+  const linked = new Map<string, LinkedDoc>();
+  if (!markdown || docsByFileId.size === 0) return { markdown, linkedDocs: [] };
 
   const lookup = (url: string) => {
     const fileId = extractDriveFileId(url);
-    return fileId ? docsByFileId.get(fileId) : undefined;
+    const doc = fileId ? docsByFileId.get(fileId) : undefined;
+    if (doc && !linked.has(doc.id)) linked.set(doc.id, doc);
+    return doc;
   };
 
-  return markdown.replace(
+  const rewritten = markdown.replace(
     LINK_PATTERN,
     (match, open, lt, linkUrl, gt, close, autolinkUrl, bareUrl) => {
       if (linkUrl !== undefined) {
@@ -67,6 +79,8 @@ export function rewriteDriveLinks(markdown: string, docsByFileId: Map<string, Li
       return doc ? `[${escapeLinkText(doc.title)}](/${doc.id})` : match;
     },
   );
+
+  return { markdown: rewritten, linkedDocs: [...linked.values()] };
 }
 
 function escapeLinkText(text: string): string {

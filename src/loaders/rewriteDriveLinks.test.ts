@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { extractDriveFileId, rewriteDriveLinks, type LinkedDoc } from './rewriteDriveLinks';
+import {
+  extractDriveFileId,
+  rewriteDriveLinks as rewriteDriveLinksWithResult,
+  type LinkedDoc,
+} from './rewriteDriveLinks';
+
+const rewriteDriveLinks = (md: string, docs: Map<string, LinkedDoc>) =>
+  rewriteDriveLinksWithResult(md, docs).markdown;
 
 describe('extractDriveFileId', () => {
   it.each([
@@ -84,5 +91,23 @@ describe('rewriteDriveLinks', () => {
     expect(rewriteDriveLinks('', docs)).toBe('');
     const md = '[a](https://docs.google.com/document/d/cookieId/edit)';
     expect(rewriteDriveLinks(md, new Map())).toBe(md);
+  });
+
+  it('reports linked docs once each, in order of first appearance', () => {
+    const md = [
+      '[Pie](https://drive.google.com/open?id=pieId)',
+      'https://docs.google.com/document/d/cookieId/edit',
+      '[Pie again](https://drive.google.com/file/d/pieId/view)',
+      '[Other](https://docs.google.com/document/d/unknownId/edit)',
+    ].join('\n');
+    expect(rewriteDriveLinksWithResult(md, docs).linkedDocs).toEqual([
+      { id: 'apple-pie', title: 'Apple [Best] Pie' },
+      { id: 'grandmas-cookies', title: "Grandma's Cookies" },
+    ]);
+  });
+
+  it('reports no linked docs when nothing matches', () => {
+    expect(rewriteDriveLinksWithResult('[a](https://example.com)', docs).linkedDocs).toEqual([]);
+    expect(rewriteDriveLinksWithResult('', docs).linkedDocs).toEqual([]);
   });
 });
