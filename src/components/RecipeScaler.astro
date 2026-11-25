@@ -1,12 +1,14 @@
 ---
 // Scales the leading amount of each ingredient checklist line. Hidden until the script finds at
 // least one amount it can scale. The steps aren't touched, so a note says so while scaled.
+// Besides the presets, the "Other" field takes any factor, like 1.5, 2/3, or 1 ½.
 const FACTORS: { value: number; label: string }[] = [
   { value: 0.5, label: '½×' },
   { value: 1, label: '1×' },
   { value: 2, label: '2×' },
   { value: 3, label: '3×' },
 ];
+import { MAX_SCALE_FACTOR } from '@utils/parseScaleFactor';
 ---
 
 <div id="recipe-scaler" class="recipe-scaler l-cluster l-space-3xs" role="group" aria-labelledby="recipe-scaler-label" hidden>
@@ -16,10 +18,27 @@ const FACTORS: { value: number; label: string }[] = [
       {label}
     </button>
   ))}
+  <label class="recipe-scaler-custom">
+    <span class="u-sr-only">Other scale, like 1.5 or 2/3</span>
+    <input
+      id="recipe-scaler-input"
+      type="text"
+      inputmode="decimal"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="Other"
+      aria-describedby="recipe-scaler-error"
+    />
+    <span aria-hidden="true">×</span>
+  </label>
+  <p id="recipe-scaler-error" class="recipe-scaler-error u-label" hidden>
+    Enter a number like 1.5 or 2/3, up to {MAX_SCALE_FACTOR}.
+  </p>
 </div>
 
 <script>
   import { parseLeadingQuantity, scaleQuantity, type LeadingQuantity } from '@utils/scaleQuantity';
+  import { parseScaleFactor } from '@utils/parseScaleFactor';
 
   /** The first non-blank text in a checklist row, skipping the checkbox and any nested lists. */
   function firstText(item: Element): Text | null {
@@ -63,20 +82,53 @@ const FACTORS: { value: number; label: string }[] = [
     if (quantities.size === 0) return;
     const note = document.querySelector<HTMLElement>('#recipe-scaler-note');
     const buttons = scaler.querySelectorAll<HTMLButtonElement>('button[data-factor]');
+    const input = scaler.querySelector<HTMLInputElement>('#recipe-scaler-input');
+    const error = scaler.querySelector<HTMLElement>('#recipe-scaler-error');
     scaler.hidden = false;
+
+    function applyFactor(factor: number) {
+      for (const button of buttons) {
+        button.setAttribute('aria-pressed', String(Number(button.dataset.factor) === factor));
+      }
+      for (const [span, quantity] of quantities) {
+        // At 1× put back the doc's own text ("1/4" stays "1/4", not "¼").
+        span.textContent = factor === 1 ? (span.dataset.original ?? '') : scaleQuantity(quantity, factor);
+        span.classList.toggle('is-scaled', factor !== 1);
+      }
+      if (note) note.hidden = factor === 1;
+    }
+
+    function showError(invalid: boolean) {
+      if (!input || !error) return;
+      input.toggleAttribute('aria-invalid', invalid);
+      error.hidden = !invalid;
+    }
 
     for (const button of buttons) {
       button.addEventListener('click', () => {
-        const factor = Number(button.dataset.factor);
-        for (const other of buttons) other.setAttribute('aria-pressed', String(other === button));
-        for (const [span, quantity] of quantities) {
-          // At 1× put back the doc's own text ("1/4" stays "1/4", not "¼").
-          span.textContent = factor === 1 ? (span.dataset.original ?? '') : scaleQuantity(quantity, factor);
-          span.classList.toggle('is-scaled', factor !== 1);
-        }
-        if (note) note.hidden = factor === 1;
+        if (input) input.value = '';
+        showError(false);
+        applyFactor(Number(button.dataset.factor));
       });
     }
+
+    // Scale as they type; only flag a bad value once they leave the field or press Enter, so a
+    // half-typed "1/" isn't called an error.
+    input?.addEventListener('input', () => {
+      const factor = parseScaleFactor(input.value);
+      if (factor !== null) {
+        showError(false);
+        applyFactor(factor);
+      } else if (!input.value.trim()) {
+        showError(false);
+        applyFactor(1);
+      }
+    });
+    const validate = () => showError(input!.value.trim() !== '' && parseScaleFactor(input!.value) === null);
+    input?.addEventListener('change', validate);
+    input?.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') validate();
+    });
   }
 
   if (document.readyState === 'loading') {
@@ -102,6 +154,31 @@ const FACTORS: { value: number; label: string }[] = [
     min-inline-size: 44px;
     padding-inline: var(--space-xs);
     font-variant-numeric: lining-nums;
+  }
+
+  .recipe-scaler-custom {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3xs);
+    font-family: var(--font-heading);
+    font-size: var(--step--1);
+    font-weight: 700;
+  }
+
+  .recipe-scaler-custom input {
+    inline-size: 5.5em;
+    min-block-size: 44px;
+    font-variant-numeric: lining-nums;
+  }
+
+  .recipe-scaler-custom input[aria-invalid] {
+    border-color: var(--color-danger);
+  }
+
+  .recipe-scaler-error {
+    flex-basis: 100%;
+    margin: 0;
+    color: var(--color-danger);
   }
 
   /* The fill shows the chosen factor; the underline keeps it from being a color-only cue. */
