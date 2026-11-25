@@ -1,12 +1,8 @@
-@use 'sass:map';
 @use 'utopia-core-scss/src/utopia' as utopia;
-@use '../../lib/plugins/sass/radix-ui-colors/radix-color-mixin' as radix;
 
+// Design tokens. See DESIGN.md for what each token is for and the contrast
+// each text/background pairing is checked against.
 @layer theme {
-    // Note: To use self-hosted custom fonts, you can use @fontsource-variable
-    // @import '@fontsource-variable/figtree';
-    // @import '@fontsource-variable/rubik';
-
     :root {
         // Dynamic Utopia type and space scales
         $min-width: 320;
@@ -25,11 +21,13 @@
             "useViewportWidth": $use-viewport-width,
         ));
 
+        // Base text is 18px on small screens up to 20px on large ones:
+        // recipes get read from across the counter.
         @include utopia.generateTypeScale((
             "minWidth": $min-width,
             "maxWidth": $max-width,
-            "minFontSize": 16,
-            "maxFontSize": 18,
+            "minFontSize": 18,
+            "maxFontSize": 20,
             "minTypeScale": 1.2,
             "maxTypeScale": 1.25,
             "positiveSteps": 5,
@@ -38,68 +36,69 @@
             "useViewportWidth": $use-viewport-width,
         ));
 
-        // Fonts
-        --font-body: Georgia, 'Times New Roman', Times, serif;
-        --font-heading: Arial, Helvetica, sans-serif;
+        // Fonts (loaded from @fontsource-variable in Base.astro)
+        --font-body: 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
+        --font-heading: 'Figtree Variable', Arial, sans-serif;
+        --font-label: var(--font-heading);
 
         // Line heights
-        --lh--2: 2.10;
-        --lh--1: 1.80;
-        --lh-0: 1.60;
-        --lh-1: 1.30;
-        --lh-2: 1.10;
-        --lh-3: 1;
-        --lh-4: 1;
-        --lh-5: 1;
+        --lh--2: 1.6;
+        --lh--1: 1.5;
+        --lh-0: 1.6;
+        --lh-1: 1.25;
+        --lh-2: 1.2;
+        --lh-3: 1.15;
+        --lh-4: 1.1;
+        --lh-5: 1.05;
     }
 
-    // Burnt Orange Theme
-    $themeColor: #CC5500;
-    $grayColor: #8b8d98;
-
-    @mixin apply-radix-scales($appearance) {
-        $background: #ffffff;
-        @if $appearance != 'light' {
-            $background: #111111;
-        }
-        $colors: generateRadixColors($appearance, '#{$themeColor}', '#{$grayColor}', '#{$background}');
-
-        $accent-vars: radix.generate-css-variables('primary',
-            map.get($colors, 'accentScale'),
-            map.get($colors, 'accentScaleAlpha'),
-            map.get($colors, 'accentSurface'),
-            map.get($colors, 'accentContrast'));
-
-        $gray-vars: radix.generate-css-variables('gray',
-            map.get($colors, 'grayScale'),
-            map.get($colors, 'grayScaleAlpha'),
-            map.get($colors, 'graySurface'),
-            map.get($colors, 'grayContrast'));
-
-        @include radix.output-css-variables($accent-vars);
-        @include radix.output-css-variables($gray-vars);
-    }
-
-    :root, .light, [data-theme="light"] {
+    @mixin light-colors {
         color-scheme: light;
-        --danger: #d3003c;
-        --danger-alt: #a3002f;
-        @include apply-radix-scales('light');
+        --color-bg: #FFFDF7;
+        --color-surface: #FAF3E3;
+        --color-text: #17130C;
+        --color-text-muted: #4D4536;
+        --color-border: #17130C;
+        --color-rule: #8C8270;
+        --color-accent: #F5A70A;
+        --color-on-accent: #17130C;
+        --color-accent-strong: #A86400;
+        --color-accent-soft: #FFE9B8;
+        --color-link: #764000;
+        --color-link-hover: #4A2800;
+        --color-focus: #17130C;
+        --color-danger: #9E002D;
     }
 
-    .dark, [data-theme="dark"] {
+    @mixin dark-colors {
         color-scheme: dark;
-        --danger: #d02354;
-        --danger-alt: #fd316b;
-        @include apply-radix-scales('dark');
+        --color-bg: #14110C;
+        --color-surface: #211C14;
+        --color-text: #F7F1E4;
+        --color-text-muted: #CFC4AE;
+        --color-border: #F7F1E4;
+        --color-rule: #7A705E;
+        --color-accent: #FFB51F;
+        --color-on-accent: #14110C;
+        --color-accent-strong: #FFB51F;
+        --color-accent-soft: #3D2C0A;
+        --color-link: #FFC24D;
+        --color-link-hover: #FFE0A3;
+        --color-focus: #FFB51F;
+        --color-danger: #FF8FA6;
+    }
+
+    :root, [data-theme="light"] {
+        @include light-colors;
+    }
+
+    [data-theme="dark"] {
+        @include dark-colors;
     }
 
     @media (prefers-color-scheme: dark) {
         :root:not([data-theme="light"]) {
-            color-scheme: dark;
-            --danger: #d02354;
-            --danger-alt: #fd316b;
-            @include apply-radix-scales('dark');
+            @include dark-colors;
         }
     }
 }

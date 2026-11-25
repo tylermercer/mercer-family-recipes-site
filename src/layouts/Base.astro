@@ -1,5 +1,8 @@
 ---
+import '@fontsource-variable/atkinson-hyperlegible-next';
+import '@fontsource-variable/figtree';
 import '@styles/index.scss';
+import ThemeToggle from '@components/ThemeToggle.astro';
 
 const title = "Family Recipes";
 ---
@@ -10,6 +13,9 @@ const title = "Family Recipes";
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="generator" content={Astro.generator} />
+		<!-- Browser chrome matches --color-bg in each theme (see DESIGN.md). -->
+		<meta name="theme-color" content="#FFFDF7" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#14110C" media="(prefers-color-scheme: dark)" />
 		<title>{title}</title>
 		<script is:inline>
 			(function () {
@@ -24,6 +30,9 @@ const title = "Family Recipes";
 	</head>
 	<body>
 		<slot />
+		<footer class="site-footer u-guttered-lg u-hide-on-print">
+			<ThemeToggle />
+		</footer>
 	</body>
 </html>
 
@@ -32,3 +41,11 @@ const title = "Family Recipes";
 	// This makes it easy to see which version of the site is being served
 	logCommitHash();
 </script>
+
+<style>
+	.site-footer {
+		display: flex;
+		justify-content: flex-end;
+		padding-block-start: 0;
+	}
+</style>

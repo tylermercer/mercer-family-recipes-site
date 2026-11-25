@@ -14,6 +14,8 @@
   "dependencies": {
     "@astrojs/cloudflare": "^14.2.4",
     "@astrojs/markdown-remark": "^7.2.4",
+    "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
+    "@fontsource-variable/figtree": "^5.3.0",
     "@radix-ui/colors": "^3.0.0",
     "astro": "^7.2.6",
     "bezier-easing": "^2.1.0",

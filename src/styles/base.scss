@@ -1,8 +1,14 @@
 @import 'modern-normalize/modern-normalize.css' layer(base);
 
+// Element defaults. See DESIGN.md: square corners, no shadows, borders only on
+// checkboxes and text inputs (plus the blockquote accent rule).
 @layer base {
     html {
         scroll-behavior: smooth;
+
+        @media (prefers-reduced-motion: reduce) {
+            scroll-behavior: auto;
+        }
     }
 
     body {
@@ -11,101 +17,347 @@
         font-size: var(--step-0);
         line-height: var(--lh-0);
         font-family: var(--font-body);
-        color: var(--gray-12);
-        background-color: var(--gray-1);
+        color: var(--color-text);
+        background-color: var(--color-bg);
+        -webkit-text-size-adjust: 100%;
+    }
+
+    // Element display rules below (e.g. button) would otherwise beat the UA's [hidden].
+    [hidden] {
+        display: none !important;
+    }
+
+    ::selection {
+        background-color: var(--color-accent-soft);
+        color: var(--color-text);
+    }
+
+    :focus-visible {
+        outline: 3px solid var(--color-focus);
+        outline-offset: 2px;
     }
 
     a {
-        line-height: var(--lh-0);
-        color: var(--primary-11);
-        text-decoration-thickness: from-font;
-        text-underline-offset: 2px;
-
-        &:focus-visible {
-            outline: 2px solid var(--primary-8);
-        }
+        color: var(--color-link);
+        text-decoration-line: underline;
+        text-decoration-thickness: max(1px, 0.08em);
+        text-underline-offset: 0.18em;
 
         &:hover {
-            color: var(--primary-12);
+            color: var(--color-link-hover);
+            text-decoration-thickness: 2px;
         }
     }
 
     h1, .h1 {
         font-size: var(--step-4);
         line-height: var(--lh-4);
+        font-weight: 800;
+        text-wrap: balance;
     }
 
     h2, .h2 {
-        font-size: var(--step-3);
-        line-height: var(--lh-3);
+        font-size: var(--step-2);
+        line-height: var(--lh-2);
+        font-weight: 750;
     }
 
     h3, .h3 {
-        font-size: var(--step-2);
-        line-height: var(--lh-2);
+        font-size: var(--step-1);
+        line-height: var(--lh-1);
+        font-weight: 700;
+    }
+
+    h4, h5, h6 {
+        font-size: var(--step-0);
+        line-height: var(--lh-0);
+        font-weight: 700;
     }
 
     h1, h2, h3, h4, h5, h6,
-    .h1, .h2, .h3, .h4, .h5, .h6 {
-        color: var(--gray-12);
+    .h1, .h2, .h3 {
+        color: var(--color-text);
         font-family: var(--font-heading);
-        font-weight: bold;
         margin: 0;
+        text-wrap: pretty;
 
         > a {
             line-height: inherit;
         }
     }
 
+    h1, .h1 {
+        text-wrap: balance;
+    }
+
     p {
         margin: 0;
     }
 
-    p + p,
-    .e-content p + p {
-        margin-top: 1em;
-    }
+    ul {
+        list-style-type: square;
+        padding-inline-start: 1.3em;
 
-    .e-content {
-        p {
-            margin-bottom: 1em;
-        }
-
-        p:last-child {
-            margin-bottom: 0;
-        }
-
-        ul, ol {
-            margin-top: 0.5em;
-            margin-bottom: 1em;
+        > li::marker {
+            color: var(--color-accent-strong);
         }
     }
 
+    ol {
+        padding-inline-start: 1.6em;
+
+        > li::marker {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            color: var(--color-accent-strong);
+        }
+    }
+
+    li + li {
+        margin-block-start: 0.35em;
+    }
+
+    hr {
+        border: none;
+        border-block-start: 1px solid var(--color-rule);
+        margin-block: var(--space-m);
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    blockquote {
+        margin: 0;
+        padding: var(--space-s);
+        background-color: var(--color-surface);
+        border-inline-start: 3px solid var(--color-accent-strong);
+
+        > :first-child { margin-block-start: 0; }
+        > :last-child { margin-block-end: 0; }
+    }
+
+    // Disclosure: heading-face summary with a square accent marker, no box.
+    summary {
+        font-family: var(--font-heading);
+        font-weight: 700;
+        cursor: pointer;
+        list-style: none;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+
+        &::before {
+            content: '▸';
+            display: inline-block;
+            inline-size: 1.1em;
+            color: var(--color-accent-strong);
+        }
+    }
+
+    details[open] > summary::before {
+        content: '▾';
+    }
+
+    // Checkboxes: one of the few bordered elements. Checked = accent fill plus
+    // a dark check mark (never the fill alone).
+    input[type="checkbox"] {
+        appearance: none;
+        flex: none;
+        inline-size: 1.25em;
+        block-size: 1.25em;
+        margin: 0;
+        border: 2px solid var(--color-border);
+        border-radius: 0;
+        background-color: var(--color-bg);
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: 85%;
+        cursor: pointer;
+        vertical-align: -0.2em;
+
+        &:checked {
+            background-color: var(--color-accent);
+            // Check mark in --color-on-accent (near-black in both themes).
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 8.5l3.2 3.2L13 4.8' fill='none' stroke='%2317130C' stroke-width='2.6' stroke-linecap='square'/%3E%3C/svg%3E");
+        }
+
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+    }
+
+    // Text inputs: the other bordered element.
+    input:is([type="text"], [type="search"], [type="email"], [type="url"], [type="number"]),
+    textarea {
+        font: inherit;
+        color: var(--color-text);
+        background-color: var(--color-bg);
+        border: 2px solid var(--color-border);
+        border-radius: 0;
+        padding: var(--space-2xs) var(--space-xs);
+
+        &::placeholder {
+            color: var(--color-text-muted);
+        }
+    }
+
+    // Buttons: borderless solid fills. Default is the primary (accent) button;
+    // .button-secondary and .button-danger are the other variants.
     button,
     a[role=button] {
-        display: inline-block;
-        background-color: var(--button-color, var(--primary-9));
-        color: var(--button-text-color, var(--gray-contrast));
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4em;
+        min-block-size: 44px;
+        padding: var(--space-2xs) var(--space-s);
         border: none;
-        padding: var(--space-xs);
-        font-size: inherit;
-        cursor: pointer;
-        text-decoration: none;
+        border-radius: 0;
+        background-color: var(--color-accent);
+        color: var(--color-on-accent);
+        font-family: var(--font-heading);
+        font-size: var(--step--1);
+        font-weight: 700;
         line-height: 1.15;
+        text-decoration: none;
+        cursor: pointer;
 
-        &:hover:not([disabled]) {
-            background-color: var(--button-color-hov, var(--primary-10));
+        &:hover:not(:disabled) {
+            background-color: var(--color-text);
+            color: var(--color-bg);
         }
 
-        &:focus-visible {
-            outline: 2px solid var(--primary-8);
-            outline-offset: 1px;
+        &:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+    }
+
+    .button-secondary {
+        background-color: var(--color-accent-soft);
+        color: var(--color-text);
+
+        &:hover:not(:disabled) {
+            background-color: var(--color-accent);
+            color: var(--color-on-accent);
+        }
+    }
+
+    .button-danger {
+        background-color: var(--color-danger);
+        color: var(--color-bg);
+
+        &:hover:not(:disabled) {
+            background-color: var(--color-text);
+            color: var(--color-bg);
+        }
+    }
+
+    // Recipe body content rendered from the Google Docs.
+    .e-content {
+        // The page title is the only h1; headings inside a doc are sections.
+        :is(h1, h2) {
+            font-size: var(--step-2);
+            line-height: var(--lh-2);
+            font-weight: 750;
         }
 
-        &[disabled] {
-            opacity: 0.7;
-            filter: grayscale(0.8);
-            cursor: default;
+        :is(h3, h4, h5, h6) {
+            font-size: var(--step-1);
+            line-height: var(--lh-1);
+            font-weight: 700;
+        }
+
+        > :is(h1, h2, h3, h4, h5, h6):not(:first-child) {
+            margin-block-start: 1.5lh;
+        }
+
+        li > :is(ul, ol) {
+            margin-block-start: 0.35em;
+        }
+
+        // Ingredient checklist (GFM task lists): no dividers, padded rows,
+        // tint + strikethrough when done, full-contrast text throughout.
+        .contains-task-list {
+            list-style: none;
+            padding: 0;
+            font-variant-numeric: tabular-nums lining-nums;
+        }
+
+        .task-list-item {
+            position: relative;
+            min-block-size: 44px;
+            padding-block: 0.45em;
+            padding-inline: 2.4em var(--space-2xs);
+            margin-block-start: 2px;
+            cursor: pointer;
+
+            > input[type="checkbox"] {
+                position: absolute;
+                inset-inline-start: 0.6em;
+                inset-block-start: 0.6em;
+            }
+
+            &:hover {
+                background-color: var(--color-surface);
+            }
+
+            &:has(> input:checked) {
+                background-color: var(--color-accent-soft);
+                text-decoration-line: line-through;
+                text-decoration-color: var(--color-accent-strong);
+                text-decoration-thickness: 2px;
+            }
+
+            // Strikethrough from the source doc (usually left over from checking
+            // items off in Google Docs) would make unchecked rows look done.
+            // Only the checkbox state strikes a row through.
+            del {
+                text-decoration: none;
+            }
+
+            // Notes nested under an ingredient keep normal bullets.
+            ul {
+                cursor: auto;
+            }
+        }
+    }
+
+    @media print {
+        html, body {
+            background-color: #fff;
+            color: #000;
+        }
+
+        * {
+            background-color: transparent !important;
+            color: #000 !important;
+            box-shadow: none !important;
+        }
+
+        a {
+            text-decoration: none;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            break-after: avoid-page;
+        }
+
+        li {
+            break-inside: avoid;
+        }
+
+        input[type="checkbox"] {
+            border-color: #000;
+            background-image: none !important;
+        }
+
+        .e-content .task-list-item {
+            text-decoration: none !important;
         }
     }
 }

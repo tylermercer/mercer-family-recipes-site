@@ -21,38 +21,75 @@ const sortedRecipes = [
 ---
 
 {sortedRecipes.length === 0 ? (
-	<div class="l-box">
-		<p>No recipes found.</p>
-	</div>
+	<p>No recipes found.</p>
 ) : (
-	<ul class="l-stack l-space-s" style="list-style-type: none; padding: 0;">
+	<ul class="recipe-list u-list-bare">
 		{sortedRecipes.map((recipe) => {
 			const wip = isWip(recipe.data.title);
 			const meta = [
 				showContributor ? recipe.data.contributor : undefined,
 				recipe.data.lastModified
-					? `Last modified: ${new Date(recipe.data.lastModified).toLocaleDateString()}`
+					? `Last modified ${new Date(recipe.data.lastModified).toLocaleDateString()}`
 					: undefined,
 			].filter(Boolean);
 			return (
-				<li class="l-box">
-					<div class="l-cluster" style="align-items: center; justify-content: space-between; gap: 0.5rem;">
-						<a href={`/${recipe.id}`} style="font-weight: bold; font-size: 1.25rem;">
-							{recipe.data.title}
-						</a>
-						{wip && (
-							<span class="u-step--1" style="background-color: var(--gray-5); color: var(--gray-12); padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid var(--gray-7); text-transform: lowercase;">
-								work in progress
-							</span>
-						)}
-					</div>
-					{meta.length > 0 && (
-						<p class="u-step--1" style="margin-top: 0.25rem; opacity: 0.8;">
-							{meta.join(' • ')}
-						</p>
-					)}
+				<li class="recipe-row">
+					<a class="recipe-title" href={`/${recipe.id}`}>{recipe.data.title}</a>
+					{wip && <span class="u-chip u-step--2">Work in progress</span>}
+					{meta.length > 0 && <p class="u-label">{meta.join(' • ')}</p>}
 				</li>
 			);
 		})}
 	</ul>
 )}
+
+<style>
+	/* Borderless rows separated by a small gap; the whole row tints on hover (DESIGN.md). */
+	.recipe-list {
+		display: grid;
+		gap: var(--space-3xs);
+		/* Hang the row padding outside the column so titles align with headings. */
+		margin-inline: calc(-1 * var(--space-xs));
+	}
+
+	.recipe-row {
+		position: relative;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.2em 0.6em;
+		padding: var(--space-2xs) var(--space-xs);
+	}
+
+	.recipe-row:hover,
+	.recipe-row:focus-within {
+		background-color: var(--color-accent-soft);
+	}
+
+	.recipe-row .u-label {
+		flex-basis: 100%;
+	}
+
+	.recipe-title {
+		font-family: var(--font-heading);
+		font-size: var(--step-1);
+		font-weight: 700;
+		line-height: var(--lh-1);
+		color: var(--color-text);
+		text-decoration: none;
+	}
+
+	/* Whole row is the link target. */
+	.recipe-title::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+	}
+
+	.recipe-title:hover,
+	.recipe-title:focus-visible {
+		color: var(--color-text);
+		text-decoration: underline;
+		text-decoration-thickness: 2px;
+	}
+</style>
