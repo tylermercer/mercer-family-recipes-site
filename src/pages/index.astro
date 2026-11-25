@@ -4,6 +4,7 @@ import Layout from '@layouts/Base.astro';
 import RecipeList from '@components/RecipeList.astro';
 import { CONTRIBUTORS } from '@utils/contributors';
 import { contributorPath } from '@utils/contributorSlug';
+import { tagPath, tagSlug } from '@utils/tags';
 
 const allRecipes = await getCollection('recipes');
 
@@ -12,6 +13,17 @@ const families = CONTRIBUTORS.map((contributor) => ({
 	contributor,
 	count: allRecipes.filter((r) => r.data.contributor === contributor).length,
 })).filter((f) => f.count > 0);
+
+// Tags alphabetically, with how many recipes have each.
+const tagCounts = new Map<string, { tag: string; count: number }>();
+for (const recipe of allRecipes) {
+	for (const tag of recipe.data.tags) {
+		const entry = tagCounts.get(tagSlug(tag)) ?? { tag, count: 0 };
+		entry.count++;
+		tagCounts.set(tagSlug(tag), entry);
+	}
+}
+const tags = [...tagCounts.values()].sort((a, b) => a.tag.localeCompare(b.tag));
 ---
 
 <Layout>
@@ -23,7 +35,7 @@ const families = CONTRIBUTORS.map((contributor) => ({
 			</p>
 		</section>
 
-		{families.length > 0 && (
+		{(families.length > 0 || tags.length > 0) && (
 			<section class="l-stack l-space-s" aria-label="Browse recipes">
 				{families.length > 0 && (
 					<details>
@@ -32,6 +44,19 @@ const families = CONTRIBUTORS.map((contributor) => ({
 							{families.map(({ contributor, count }) => (
 								<li>
 									<a href={contributorPath(contributor)}>{contributor}</a>{' '}
+									<span class="u-step--1" style="opacity: 0.8;">({count})</span>
+								</li>
+							))}
+						</ul>
+					</details>
+				)}
+				{tags.length > 0 && (
+					<details>
+						<summary><h2 class="browse-heading">By tag</h2></summary>
+						<ul class="l-cluster browse-list">
+							{tags.map(({ tag, count }) => (
+								<li>
+									<a href={tagPath(tag)}>{tag}</a>{' '}
 									<span class="u-step--1" style="opacity: 0.8;">({count})</span>
 								</li>
 							))}

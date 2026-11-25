@@ -1,0 +1,33 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '@layouts/Base.astro';
+import RecipeList from '@components/RecipeList.astro';
+import { tagSlug } from '@utils/tags';
+
+export async function getStaticPaths() {
+	const allRecipes = await getCollection('recipes');
+	const recipesByTag = new Map<string, { tag: string; recipes: typeof allRecipes }>();
+	for (const recipe of allRecipes) {
+		for (const tag of recipe.data.tags) {
+			const slug = tagSlug(tag);
+			if (!recipesByTag.has(slug)) recipesByTag.set(slug, { tag, recipes: [] });
+			recipesByTag.get(slug)!.recipes.push(recipe);
+		}
+	}
+	return [...recipesByTag].map(([slug, props]) => ({ params: { tag: slug }, props }));
+}
+
+const { tag, recipes } = Astro.props;
+---
+
+<Layout>
+	<main class="u-guttered-lg l-stack l-space-xl">
+		<nav class="l-space-s">
+			<a href="/" role="button">&larr; Back to all recipes</a>
+		</nav>
+		<section class="l-space-m">
+			<h1>Recipes tagged “{tag}”</h1>
+			<RecipeList recipes={recipes} />
+		</section>
+	</main>
+</Layout>

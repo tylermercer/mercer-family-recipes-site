@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   contributorForFolder,
+  folderTags,
   googleDriveLoader,
   processDocIngredients,
 } from './googleDriveLoader';
@@ -141,6 +142,21 @@ describe('contributorForFolder', () => {
   it('falls back to Mom & Dad for unmapped folders', () => {
     expect(contributorForFolder('Misc')).toBe('Mom & Dad');
     expect(contributorForFolder('')).toBe('Mom & Dad');
+  });
+});
+
+describe('folderTags', () => {
+  it('returns no tags for docs in the root folder', () => {
+    expect(folderTags([])).toEqual([]);
+  });
+
+  it('skips a first-level contributor folder but keeps folders below it', () => {
+    expect(folderTags(['Eve&Tyler'])).toEqual([]);
+    expect(folderTags(['Eve&Tyler', 'Desserts', 'Pies'])).toEqual(['Desserts', 'Pies']);
+  });
+
+  it('keeps every folder when the first-level folder is not a contributor', () => {
+    expect(folderTags(['Soups', 'Winter'])).toEqual(['Soups', 'Winter']);
   });
 });
 
@@ -362,6 +378,7 @@ describe('googleDriveLoader', () => {
         lastModified: new Date('2025-01-01T00:00:00Z'),
         driveUrl: 'https://docs.google.com/document/d/doc-gdoc-1/edit',
         contributor: 'Mom & Dad',
+        tags: [],
         relatedRecipes: [],
       },
     });
@@ -375,6 +392,7 @@ describe('googleDriveLoader', () => {
         lastModified: new Date('2025-01-02T00:00:00Z'),
         driveUrl: 'https://drive.google.com/file/d/doc-docx-2/view',
         contributor: 'Mom & Dad',
+        tags: [],
         relatedRecipes: [],
       },
     });
@@ -388,6 +406,7 @@ describe('googleDriveLoader', () => {
         lastModified: new Date('2025-01-03T00:00:00Z'),
         driveUrl: 'https://drive.google.com/file/d/doc-legacy-3/view',
         contributor: 'Mom & Dad',
+        tags: ['sub folder'],
         relatedRecipes: [],
       },
     });
@@ -631,7 +650,7 @@ describe('googleDriveLoader', () => {
     });
   });
 
-  it('sets contributor from the first-level folder, including for nested subfolders', async () => {
+  it('sets contributor from the first-level folder and tags from the other folders', async () => {
     const subfolders: Record<string, { id: string; name: string }[]> = {
       root: [{ id: 'et-folder', name: 'Eve&Tyler' }, { id: 'misc-folder', name: 'Misc' }],
       'et-folder': [{ id: 'et-desserts', name: 'Desserts' }],
@@ -646,7 +665,9 @@ describe('googleDriveLoader', () => {
       const isFolderQuery = q.includes("mimeType = 'application/vnd.google-apps.folder'");
       return { data: { files: (isFolderQuery ? subfolders : docs)[parent] ?? [] } };
     });
-    mockExport.mockResolvedValue({ data: 'Body' });
+    mockExport.mockImplementation(async ({ fileId }) => ({
+      data: fileId === 'et-doc' ? 'Body #Dessert #GF\n\n#gluten_free' : 'Body',
+    }));
 
     const loader = googleDriveLoader({
       folderId: 'root',
@@ -675,9 +696,16 @@ describe('googleDriveLoader', () => {
     expect(contributorOf('nested-recipe')).toBe('Eve & Tyler');
     expect(contributorOf('misc-recipe')).toBe('Mom & Dad');
 
+    const tagsOf = (id: string) =>
+      mockParseData.mock.calls.find(([arg]) => arg.id === id)?.[0].data.tags;
+    expect(tagsOf('root-recipe')).toEqual([]);
+    // Folder tags first, then hashtags; normalized and deduplicated.
+    expect(tagsOf('nested-recipe')).toEqual(['desserts', 'dessert', 'gf', 'gluten free']);
+    expect(tagsOf('misc-recipe')).toEqual(['misc']);
+
     expect(mockLogger.info).toHaveBeenCalledWith('Folder "Eve&Tyler": 1 document(s) -> Eve & Tyler');
     expect(mockLogger.info).toHaveBeenCalledWith(
-      'Folder "Misc": 1 document(s) -> Mom & Dad (unmapped folder; add it to CONTRIBUTOR_BY_FOLDER)',
+      'Folder "Misc": 1 document(s) -> Mom & Dad (not a contributor folder, so used as a tag)',
     );
   });
 

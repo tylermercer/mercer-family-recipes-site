@@ -4,7 +4,9 @@ import mammoth from 'mammoth';
 import TurndownService from 'turndown';
 import { rewriteDriveLinks, type LinkedDoc } from './rewriteDriveLinks';
 import { stripLeadingH1 } from './stripLeadingH1';
+import { extractHashtags } from './extractHashtags';
 import type { Contributor } from '@utils/contributors';
+import { uniqueTags } from '@utils/tags';
 
 export interface GoogleDriveLoaderOptions {
   folderId: string;
@@ -29,7 +31,18 @@ export function contributorForFolder(topLevelFolder: string | undefined): Contri
   return CONTRIBUTOR_BY_FOLDER[topLevelFolder] ?? DEFAULT_CONTRIBUTOR;
 }
 
-type DriveDoc = drive_v3.Schema$File & { id: string; name: string; topLevelFolder?: string };
+/**
+ * Tags from the folders a doc is in: every folder below the root, except a first-level folder
+ * that maps to a contributor.
+ */
+export function folderTags(folderPath: string[]): string[] {
+  const [first, ...rest] = folderPath;
+  if (first === undefined) return [];
+  return first in CONTRIBUTOR_BY_FOLDER ? rest : folderPath;
+}
+
+/** A doc's Drive file plus the names of the folders it's in, from just below the root down. */
+type DriveDoc = drive_v3.Schema$File & { id: string; name: string; folderPath: string[] };
 
 const MIME = {
   folder: 'application/vnd.google-apps.folder',
@@ -227,14 +240,15 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
         store.clear();
 
         // Pass 1: walk the folder tree and collect every supported document.
-        // topLevelFolder is the name of the first-level subfolder a folder sits under, or
-        // undefined for the root folder itself.
-        const foldersToProcess: { id: string; topLevelFolder?: string }[] = [{ id: folderId }];
+        // folderPath holds the folder names from just below the root down to this folder.
+        const foldersToProcess: { id: string; folderPath: string[] }[] = [
+          { id: folderId, folderPath: [] },
+        ];
         const allFiles: DriveDoc[] = [];
         const docsPerTopLevelFolder = new Map<string, number>();
 
         while (foldersToProcess.length > 0) {
-          const { id: currentFolderId, topLevelFolder } = foldersToProcess.shift()!;
+          const { id: currentFolderId, folderPath } = foldersToProcess.shift()!;
 
           const subfolders = await listAll(
             `'${currentFolderId}' in parents and mimeType = '${MIME.folder}' and trashed = false`,
@@ -242,7 +256,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
           );
           for (const sf of subfolders) {
             if (sf.id) {
-              foldersToProcess.push({ id: sf.id, topLevelFolder: topLevelFolder ?? sf.name ?? '' });
+              foldersToProcess.push({ id: sf.id, folderPath: [...folderPath, sf.name ?? ''] });
             }
           }
 
@@ -253,8 +267,8 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
           );
           for (const file of files) {
             if (file.id && file.name) {
-              allFiles.push({ ...file, id: file.id, name: file.name, topLevelFolder });
-              const key = topLevelFolder ?? '(root)';
+              allFiles.push({ ...file, id: file.id, name: file.name, folderPath });
+              const key = folderPath[0] ?? '(root)';
               docsPerTopLevelFolder.set(key, (docsPerTopLevelFolder.get(key) ?? 0) + 1);
             }
           }
@@ -265,7 +279,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
           const contributor = contributorForFolder(folderName === '(root)' ? undefined : folderName);
           logger.info(
             `Folder "${folderName}": ${count} document(s) -> ${contributor}` +
-              (mapped ? '' : ' (unmapped folder; add it to CONTRIBUTOR_BY_FOLDER)'),
+              (mapped ? '' : ' (not a contributor folder, so used as a tag)'),
           );
         }
 
@@ -309,6 +323,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
 
         // Pass 3: rewrite links between recipes into internal links, then render and store.
         let totalLoaded = 0;
+        const tagCounts = new Map<string, number>();
         for (const { file, id, title, markdown } of converted) {
           try {
             const { markdown: linkedMarkdown, linkedDocs } = rewriteDriveLinks(
@@ -325,11 +340,14 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
                 (file.mimeType === MIME.gdoc
                   ? `https://docs.google.com/document/d/${file.id}/edit`
                   : `https://drive.google.com/file/d/${file.id}/view`),
-              contributor: contributorForFolder(file.topLevelFolder),
+              contributor: contributorForFolder(file.folderPath[0]),
+              tags: uniqueTags([...folderTags(file.folderPath), ...extractHashtags(markdown)]),
               relatedRecipes: linkedDocs.map((doc) => doc.id).filter((relatedId) => relatedId !== id),
             };
 
             const parsedData = await parseData({ id, data: rawData });
+
+            for (const tag of rawData.tags) tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
 
             store.set({
               id,
@@ -342,6 +360,14 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
               `Failed to load "${file.name}": ${err instanceof Error ? err.message : err}`,
             );
           }
+        }
+
+        if (tagCounts.size > 0) {
+          const summary = [...tagCounts]
+            .sort(([a, x], [b, y]) => y - x || a.localeCompare(b))
+            .map(([tag, count]) => `${tag} (${count})`)
+            .join(', ');
+          logger.info(`Tags: ${summary}`);
         }
 
         if (totalDocsFound === 0) {
