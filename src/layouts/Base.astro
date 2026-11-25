@@ -6,6 +6,13 @@ import ThemeToggle from '@components/ThemeToggle.astro';
 
 const title = "Family Recipes";
 
+const description = "Recipes from across the Mercer family, ready to cook from.";
+
+// Social preview: one static image for every page (public/og-image.png, 1200×600).
+// Crawlers need absolute URLs, built from `site` in astro.config.mjs.
+const ogImage = new URL('/og-image.png', Astro.site);
+const pageUrl = new URL(Astro.url.pathname, Astro.site);
+
 // --color-bg for each theme (src/styles/theme.scss).
 const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 ---
@@ -26,6 +33,23 @@ const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 		<meta name="theme-color" content={themeColors.dark} media="(prefers-color-scheme: dark)"
 			data-scheme="dark" data-theme-color-light={themeColors.light} data-theme-color-dark={themeColors.dark} />
 		<title>{title}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={pageUrl} />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="Family Recipes" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={pageUrl} />
+		<meta property="og:image" content={ogImage} />
+		<meta property="og:image:type" content="image/png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="600" />
+		<meta property="og:image:alt" content="Family Recipes: the Mercer family cookbook, with an ingredient checklist." />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={ogImage} />
 		<script is:inline>
 			(function () {
 				const stored = localStorage.getItem('theme');
