@@ -1,50 +1,91 @@
 ---
+// Two-state theme toggle, matching the personal website: three states internally (light or
+// dark override, or follow the system), but it only ever shows light or dark. The icon and
+// label are chosen by CSS from the theme on screen, so they're right before any JS runs.
 ---
 
-<button id="theme-toggle" type="button" class="button-secondary">
-    Toggle theme
+<button id="theme-toggle" type="button" class="theme-toggle button-secondary">
+	<span class="when-light">
+		<svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M20.7 14.6A8.5 8.5 0 0 1 9.4 3.3a.75.75 0 0 0-.98-.95A10 10 0 1 0 21.65 15.6a.75.75 0 0 0-.95-1Z"/></svg>
+		<span class="u-sr-only">Switch to dark theme</span>
+	</span>
+	<span class="when-dark">
+		<svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="4.5" fill="currentColor"/><path stroke="currentColor" stroke-width="2" stroke-linecap="square" d="M12 1.5v2.5M12 20v2.5M1.5 12H4M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+		<span class="u-sr-only">Switch to light theme</span>
+	</span>
 </button>
 
 <script>
-    const THEME_KEY = 'theme';
+	import { nextThemeOverride, type Theme } from '@utils/nextThemeOverride';
 
-    function getCurrentTheme(): 'light' | 'dark' | null {
-        const stored = localStorage.getItem(THEME_KEY);
-        return stored === 'light' || stored === 'dark' ? stored : null;
-    }
+	const THEME_KEY = 'theme';
 
-    function applyTheme(theme: 'light' | 'dark' | null) {
-        if (theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-        } else {
-            document.documentElement.removeAttribute('data-theme');
-        }
-    }
+	function getStoredTheme(): Theme | null {
+		const stored = localStorage.getItem(THEME_KEY);
+		return stored === 'light' || stored === 'dark' ? stored : null;
+	}
 
-    function handleToggleClick() {
-        const currentStored = getCurrentTheme();
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const systemTheme: 'light' | 'dark' = prefersDark ? 'dark' : 'light';
-        const displayedTheme = currentStored ?? systemTheme;
+	function applyTheme(theme: Theme | null) {
+		if (theme) {
+			document.documentElement.setAttribute('data-theme', theme);
+		} else {
+			document.documentElement.removeAttribute('data-theme');
+		}
+	}
 
-        if (displayedTheme === systemTheme) {
-            const nextTheme = systemTheme === 'dark' ? 'light' : 'dark';
-            localStorage.setItem(THEME_KEY, nextTheme);
-            applyTheme(nextTheme);
-        } else {
-            localStorage.removeItem(THEME_KEY);
-            applyTheme(null);
-        }
-    }
+	function handleToggleClick() {
+		// Read the system preference only at click time; never react to it changing.
+		const systemTheme: Theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+		const next = nextThemeOverride(getStoredTheme(), systemTheme);
+		if (next) {
+			localStorage.setItem(THEME_KEY, next);
+		} else {
+			localStorage.removeItem(THEME_KEY);
+		}
+		applyTheme(next);
+	}
 
-    const toggleButton = document.querySelector('#theme-toggle');
-    toggleButton?.addEventListener('click', handleToggleClick);
+	document.querySelectorAll('#theme-toggle').forEach((button) => {
+		button.addEventListener('click', handleToggleClick);
+	});
 
-    applyTheme(getCurrentTheme());
-
-    window.addEventListener('pageshow', (event: PageTransitionEvent) => {
-        if (event.persisted) {
-            applyTheme(getCurrentTheme());
-        }
-    });
+	window.addEventListener('pageshow', (event: PageTransitionEvent) => {
+		if (event.persisted) {
+			applyTheme(getStoredTheme());
+		}
+	});
 </script>
+
+<style>
+	.theme-toggle {
+		min-inline-size: 44px;
+		padding-inline: var(--space-2xs);
+	}
+
+	.theme-toggle > span {
+		display: inline-flex;
+	}
+
+	/* Show the icon for the theme you'd switch *to*: moon in light, sun in dark. */
+	.when-dark {
+		display: none !important;
+	}
+
+	:global(:root[data-theme="dark"]) .when-light {
+		display: none !important;
+	}
+
+	:global(:root[data-theme="dark"]) .when-dark {
+		display: inline-flex !important;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		:global(:root:not([data-theme="light"])) .when-light {
+			display: none !important;
+		}
+
+		:global(:root:not([data-theme="light"])) .when-dark {
+			display: inline-flex !important;
+		}
+	}
+</style>
