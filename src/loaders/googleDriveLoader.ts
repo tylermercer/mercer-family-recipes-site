@@ -5,6 +5,7 @@ import TurndownService from 'turndown';
 import { rewriteDriveLinks, type LinkedDoc } from './rewriteDriveLinks';
 import { stripLeadingH1 } from './stripLeadingH1';
 import { stripStrikethrough } from './stripStrikethrough';
+import { checklistIngredients } from './checklistIngredients';
 import { extractHashtags } from './extractHashtags';
 import type { Contributor } from '@utils/contributors';
 import { uniqueTags } from '@utils/tags';
@@ -57,43 +58,6 @@ const turndown = new TurndownService({
   codeBlockStyle: 'fenced',
   bulletListMarker: '-',
 });
-
-export function processDocIngredients(text: string): string {
-  if (!text || !text.trim()) return text;
-
-  const paragraphs = text.split(/\r?\n\s*\r?\n/);
-
-  const processedParagraphs = paragraphs.map((paragraph) => {
-    const lines = paragraph.split(/\r?\n/);
-    const nonEmptyLines = lines.filter((line) => line.trim().length > 0);
-
-    if (nonEmptyLines.length === 0) {
-      return paragraph;
-    }
-
-    const numberedCount = nonEmptyLines.filter((line) => {
-      const cleaned = line.trim().replace(/^[•\-\*]\s*/, '');
-      return /^[\d\u00BC-\u00BE\u2150-\u215E]/.test(cleaned);
-    }).length;
-
-    const isIngredientsParagraph = numberedCount / nonEmptyLines.length > 0.5;
-
-    if (!isIngredientsParagraph) {
-      return paragraph;
-    }
-
-    return lines
-      .map((line) => {
-        const trimmed = line.trim();
-        if (!trimmed) return '';
-        const cleaned = trimmed.replace(/^[•\-\*]\s*/, '');
-        return `- [ ] ${cleaned}`;
-      })
-      .join('\n');
-  });
-
-  return processedParagraphs.join('\n\n');
-}
 
 export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
   const folderId = options.folderId;
@@ -175,7 +139,7 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
           const extracted = await extractor.extract(buffer);
           const text = extracted.getBody();
           if (text && text.trim().length > 0) {
-            return processDocIngredients(text);
+            return text;
           }
         } catch (err) {
           logger.debug(
@@ -322,13 +286,15 @@ export function googleDriveLoader(options: GoogleDriveLoaderOptions): Loader {
           }
         }
 
-        // Pass 3: rewrite links between recipes into internal links, then render and store.
+        // Pass 3: clean up the markdown (strikethroughs out, ingredient list made a checklist,
+        // leading title removed), rewrite links between recipes into internal links, then render
+        // and store.
         let totalLoaded = 0;
         const tagCounts = new Map<string, number>();
         for (const { file, id, title, markdown } of converted) {
           try {
             const { markdown: linkedMarkdown, linkedDocs } = rewriteDriveLinks(
-              stripLeadingH1(stripStrikethrough(markdown)),
+              stripLeadingH1(checklistIngredients(stripStrikethrough(markdown))),
               docsByFileId,
             );
             const renderedContent = await renderMarkdown(linkedMarkdown);
