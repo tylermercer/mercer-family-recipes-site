@@ -3,17 +3,15 @@
 // checklist and the Clipboard API, so it never shows as a dead button.
 ---
 
-<button id="copy-ingredients-btn" type="button" class="button-secondary copy-ingredients" data-state="idle" hidden>
-  <!-- All labels share one grid cell so the button keeps its width when the label changes. -->
-  <span data-label="idle">Copy ingredient list</span>
-  <span data-label="copied" aria-hidden="true">Copied!</span>
-  <span data-label="failed" aria-hidden="true">Couldn't copy</span>
+<button id="copy-ingredients-btn" type="button" class="button-secondary copy-ingredients" hidden>
+  Copy ingredient list
 </button>
 <span id="copy-ingredients-status" class="u-sr-only" role="status"></span>
 
 <script>
   import { ingredientListText } from '@utils/ingredientListText';
 
+  const LABEL = 'Copy ingredient list';
   const RESET_AFTER_MS = 2000;
 
   function initCopyIngredients() {
@@ -26,12 +24,12 @@
     button.hidden = false;
     let resetTimer: number | undefined;
 
-    function show(state: 'copied' | 'failed') {
-      button!.dataset.state = state;
-      status!.textContent = button!.querySelector(`[data-label="${state}"]`)?.textContent ?? '';
+    function show(message: string) {
+      button!.textContent = message;
+      status!.textContent = message;
       window.clearTimeout(resetTimer);
       resetTimer = window.setTimeout(() => {
-        button!.dataset.state = 'idle';
+        button!.textContent = LABEL;
         status!.textContent = '';
       }, RESET_AFTER_MS);
     }
@@ -39,10 +37,10 @@
     button.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(ingredientListText(content));
-        show('copied');
+        show('Copied!');
       } catch (e) {
         console.error('Failed to copy the ingredient list', e);
-        show('failed');
+        show("Couldn't copy");
       }
     });
   }
@@ -55,19 +53,8 @@
 </script>
 
 <style>
+  /* Wide enough for "Copy ingredient list", so the shorter "Copied!" doesn't shift the row. */
   .copy-ingredients {
-    display: inline-grid;
-    place-items: center;
-  }
-
-  .copy-ingredients > [data-label] {
-    grid-area: 1 / 1;
-    visibility: hidden;
-  }
-
-  .copy-ingredients[data-state='idle'] > [data-label='idle'],
-  .copy-ingredients[data-state='copied'] > [data-label='copied'],
-  .copy-ingredients[data-state='failed'] > [data-label='failed'] {
-    visibility: visible;
+    min-inline-size: 11.5em;
   }
 </style>
