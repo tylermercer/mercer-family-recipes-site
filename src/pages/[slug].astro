@@ -32,6 +32,10 @@ export async function getStaticPaths() {
 }
 
 const { recipe } = Astro.props;
+// Shown in one line, separated by bullets.
+const metaParts = (['contributor', 'lastModified', 'driveUrl'] as const).filter(
+	(key) => recipe.data[key],
+);
 let Content = null;
 let relatedRecipes: Awaited<ReturnType<typeof getEntries<'recipes'>>> = [];
 if (!recipe.isMock) {
@@ -48,23 +52,22 @@ if (!recipe.isMock) {
 		</nav>
 		<article class="l-space-m recipe-content">
 			<h1>{recipe.data.title}</h1>
-			<div class="l-cluster" style="opacity: 0.8; margin-bottom: 1.5rem;">
-				{recipe.data.contributor && (
-					<p class="u-step--1">
-						From <a href={contributorPath(recipe.data.contributor)}>{recipe.data.contributor}</a> &bull;
-					</p>
-				)}
-				{recipe.data.lastModified && (
-					<p class="u-step--1">
-						Last modified: {new Date(recipe.data.lastModified).toLocaleDateString()}
-					</p>
-				)}
-				{recipe.data.driveUrl && (
-					<p class="u-step--1">
-						&bull; <a href={recipe.data.driveUrl} target="_blank" rel="noopener noreferrer">View Google Doc source</a>
-					</p>
-				)}
-			</div>
+			<p class="u-step--1" style="opacity: 0.8; margin-top: 0.25rem; margin-bottom: 1.5rem;">
+				{metaParts.map((part, i) => (
+					<Fragment>
+						{i > 0 && ' • '}
+						{part === 'contributor' && (
+							<span>From <a href={contributorPath(recipe.data.contributor)}>{recipe.data.contributor}</a></span>
+						)}
+						{part === 'lastModified' && (
+							<span>Last modified: {new Date(recipe.data.lastModified).toLocaleDateString()}</span>
+						)}
+						{part === 'driveUrl' && (
+							<a href={recipe.data.driveUrl} target="_blank" rel="noopener noreferrer">View Google Doc source</a>
+						)}
+					</Fragment>
+				))}
+			</p>
 			{recipe.data.tags?.length > 0 && (
 				<ul class="l-cluster u-step--1" aria-label="Tags" style="list-style-type: none; padding: 0; gap: 0.25rem 0.75rem; margin-bottom: 1.5rem;">
 					{recipe.data.tags.map((tag: string) => (
