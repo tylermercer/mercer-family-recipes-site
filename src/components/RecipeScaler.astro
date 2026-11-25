@@ -1,0 +1,115 @@
+---
+// Scales the leading amount of each ingredient checklist line. Hidden until the script finds at
+// least one amount it can scale. The steps aren't touched, so a note says so while scaled.
+const FACTORS: { value: number; label: string }[] = [
+  { value: 0.5, label: '½×' },
+  { value: 1, label: '1×' },
+  { value: 2, label: '2×' },
+  { value: 3, label: '3×' },
+];
+---
+
+<div id="recipe-scaler" class="recipe-scaler l-cluster l-space-3xs" role="group" aria-labelledby="recipe-scaler-label" hidden>
+  <span id="recipe-scaler-label" class="recipe-scaler-label">Scale</span>
+  {FACTORS.map(({ value, label }) => (
+    <button type="button" class="button-secondary" data-factor={value} aria-pressed={value === 1 ? 'true' : 'false'}>
+      {label}
+    </button>
+  ))}
+</div>
+
+<script>
+  import { parseLeadingQuantity, scaleQuantity, type LeadingQuantity } from '@utils/scaleQuantity';
+
+  /** The first non-blank text in a checklist row, skipping the checkbox and any nested lists. */
+  function firstText(item: Element): Text | null {
+    const walker = document.createTreeWalker(item, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+      acceptNode: (node) =>
+        node instanceof Element && node !== item && node.matches('ul, ol')
+          ? NodeFilter.FILTER_REJECT
+          : NodeFilter.FILTER_ACCEPT,
+    });
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (node instanceof Text && node.data.trim()) return node;
+    }
+    return null;
+  }
+
+  /** Wraps each row's leading amount in a span and remembers what it parsed to. */
+  function wrapQuantities(content: Element): Map<HTMLElement, LeadingQuantity> {
+    const quantities = new Map<HTMLElement, LeadingQuantity>();
+    for (const item of content.querySelectorAll('.contains-task-list > .task-list-item')) {
+      const text = firstText(item);
+      const quantity = text && parseLeadingQuantity(text.data);
+      if (!text || !quantity) continue;
+      const amount = text.splitText(quantity.start);
+      amount.splitText(quantity.end - quantity.start);
+      const span = document.createElement('span');
+      span.className = 'scaled-qty';
+      amount.replaceWith(span);
+      span.append(amount);
+      span.dataset.original = amount.data;
+      quantities.set(span, quantity);
+    }
+    return quantities;
+  }
+
+  function initRecipeScaler() {
+    const scaler = document.querySelector<HTMLElement>('#recipe-scaler');
+    const content = document.querySelector('.e-content');
+    if (!scaler || !content || content.querySelector('.scaled-qty')) return;
+
+    const quantities = wrapQuantities(content);
+    if (quantities.size === 0) return;
+    const note = document.querySelector<HTMLElement>('#recipe-scaler-note');
+    const buttons = scaler.querySelectorAll<HTMLButtonElement>('button[data-factor]');
+    scaler.hidden = false;
+
+    for (const button of buttons) {
+      button.addEventListener('click', () => {
+        const factor = Number(button.dataset.factor);
+        for (const other of buttons) other.setAttribute('aria-pressed', String(other === button));
+        for (const [span, quantity] of quantities) {
+          // At 1× put back the doc's own text ("1/4" stays "1/4", not "¼").
+          span.textContent = factor === 1 ? (span.dataset.original ?? '') : scaleQuantity(quantity, factor);
+          span.classList.toggle('is-scaled', factor !== 1);
+        }
+        if (note) note.hidden = factor === 1;
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initRecipeScaler);
+  } else {
+    initRecipeScaler();
+  }
+</script>
+
+<style>
+  .recipe-scaler {
+    align-items: center;
+  }
+
+  .recipe-scaler-label {
+    margin-inline-end: var(--space-2xs);
+    font-family: var(--font-heading);
+    font-size: var(--step--1);
+    font-weight: 700;
+  }
+
+  .recipe-scaler button {
+    min-inline-size: 44px;
+    padding-inline: var(--space-xs);
+    font-variant-numeric: lining-nums;
+  }
+
+  /* The fill shows the chosen factor; the underline keeps it from being a color-only cue. */
+  .recipe-scaler button[aria-pressed='true'] {
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.2em;
+  }
+</style>

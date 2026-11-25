@@ -280,6 +280,14 @@
             margin-block-start: 0.35em;
         }
 
+        // Amounts changed by the recipe scaler get a soft highlight so they stand out.
+        .scaled-qty.is-scaled {
+            background-color: var(--color-accent-soft);
+            color: var(--color-text);
+            font-weight: 700;
+            padding-inline: 0.15em;
+        }
+
         // Ingredient checklist (GFM task lists): no dividers, padded rows,
         // tint + strikethrough when done, full-contrast text throughout.
         .contains-task-list {
