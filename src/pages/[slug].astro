@@ -1,7 +1,6 @@
 ---
 import { getCollection, getEntries, render } from 'astro:content';
 import Layout from '@layouts/Base.astro';
-import Search from '@components/Search.astro';
 import KeepAwakeToggle from '@components/KeepAwakeToggle.astro';
 import { contributorPath } from '@utils/contributorSlug';
 import { tagPath } from '@utils/tags';
@@ -48,9 +47,8 @@ if (!recipe.isMock) {
 
 <Layout>
 	<main class="u-guttered-lg l-stack l-space-xl">
-		<nav class="l-cluster" style="justify-content: space-between;">
+		<nav class="l-space-s">
 			<a href="/" role="button">&larr; Back to all recipes</a>
-			<Search />
 		</nav>
 		<article class="l-space-m recipe-content" data-pagefind-body>
 			<h1 data-pagefind-meta="title">{recipe.data.title}</h1>

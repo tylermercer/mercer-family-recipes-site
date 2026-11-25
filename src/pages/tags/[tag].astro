@@ -1,7 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '@layouts/Base.astro';
-import Search from '@components/Search.astro';
 import RecipeList from '@components/RecipeList.astro';
 import { tagSlug } from '@utils/tags';
 
@@ -23,9 +22,8 @@ const { tag, recipes } = Astro.props;
 
 <Layout>
 	<main class="u-guttered-lg l-stack l-space-xl">
-		<nav class="l-cluster" style="justify-content: space-between;">
+		<nav class="l-space-s">
 			<a href="/" role="button">&larr; Back to all recipes</a>
-			<Search />
 		</nav>
 		<section class="l-space-m">
 			<h1>Recipes tagged “{tag}”</h1>
