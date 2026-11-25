@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeTag, tagPath, tagSlug, uniqueTags } from '@utils/tags';
+import { countTags, normalizeTag, tagPath, tagSlug, uniqueTags } from '@utils/tags';
 
 describe('normalizeTag', () => {
   it.each([
@@ -36,5 +36,29 @@ describe('uniqueTags', () => {
 
   it('drops tags with no usable characters', () => {
     expect(uniqueTags(['', '  ', '---', '!!!'])).toEqual([]);
+  });
+});
+
+describe('countTags', () => {
+  it('counts recipes per tag, most-used first, alphabetical within a tie', () => {
+    expect(
+      countTags([['dinner', 'gf'], ['dessert'], ['dinner'], ['gf', 'dessert'], ['breakfast']]),
+    ).toEqual([
+      { tag: 'dessert', count: 2 },
+      { tag: 'dinner', count: 2 },
+      { tag: 'gf', count: 2 },
+      { tag: 'breakfast', count: 1 },
+    ]);
+  });
+
+  it('treats tags with the same slug as one tag and counts a recipe once per tag', () => {
+    expect(countTags([['Main Dishes', 'main-dishes'], ['main dishes']])).toEqual([
+      { tag: 'main dishes', count: 2 },
+    ]);
+  });
+
+  it('ignores empty tags and handles no recipes', () => {
+    expect(countTags([['', '!!!']])).toEqual([]);
+    expect(countTags([])).toEqual([]);
   });
 });

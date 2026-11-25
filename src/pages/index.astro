@@ -5,7 +5,7 @@ import Search from '@components/Search.astro';
 import RecipeList from '@components/RecipeList.astro';
 import { CONTRIBUTORS } from '@utils/contributors';
 import { contributorPath } from '@utils/contributorSlug';
-import { tagPath, tagSlug } from '@utils/tags';
+import { countTags, tagPath } from '@utils/tags';
 
 const allRecipes = await getCollection('recipes');
 
@@ -15,16 +15,9 @@ const families = CONTRIBUTORS.map((contributor) => ({
 	count: allRecipes.filter((r) => r.data.contributor === contributor).length,
 })).filter((f) => f.count > 0);
 
-// Tags alphabetically, with how many recipes have each.
-const tagCounts = new Map<string, { tag: string; count: number }>();
-for (const recipe of allRecipes) {
-	for (const tag of recipe.data.tags) {
-		const entry = tagCounts.get(tagSlug(tag)) ?? { tag, count: 0 };
-		entry.count++;
-		tagCounts.set(tagSlug(tag), entry);
-	}
-}
-const tags = [...tagCounts.values()].sort((a, b) => a.tag.localeCompare(b.tag));
+// Tags, most-used first. The first few are always shown; the rest sit behind "Show all".
+const VISIBLE_TAG_COUNT = 5;
+const tags = countTags(allRecipes.map((r) => r.data.tags));
 ---
 
 <Layout>
@@ -37,7 +30,7 @@ const tags = [...tagCounts.values()].sort((a, b) => a.tag.localeCompare(b.tag));
 
 		{families.length > 0 && (
 			<section class="l-stack l-space-2xs" aria-labelledby="by-family-heading">
-				<h2 id="by-family-heading" class="family-heading">By family</h2>
+				<h2 id="by-family-heading" class="browse-heading">By family</h2>
 				<ul class="l-cluster l-space-2xs u-list-bare">
 					{families.map(({ contributor, count }) => (
 						<li>
@@ -51,21 +44,33 @@ const tags = [...tagCounts.values()].sort((a, b) => a.tag.localeCompare(b.tag));
 		)}
 
 		{tags.length > 0 && (
-			<section class="l-stack l-space-s" aria-label="Browse recipes by tag">
-				{tags.length > 0 && (
-					<details class="browse">
-						<summary><h2 class="browse-heading">By tag</h2></summary>
-						<ul class="l-cluster l-space-2xs u-list-bare browse-list">
-							{tags.map(({ tag, count }) => (
-								<li>
-									<a class="u-chip" href={tagPath(tag)}>
-										#{tag}&nbsp;<span class="browse-count">({count})</span>
-									</a>
-								</li>
-							))}
-						</ul>
-					</details>
-				)}
+			<section class="l-stack l-space-2xs" aria-labelledby="by-tag-heading">
+				<h2 id="by-tag-heading" class="browse-heading">By tag</h2>
+				<ul class="l-cluster l-space-2xs u-list-bare" id="tag-list">
+					{tags.map(({ tag, count }, i) => (
+						<li class:list={{ 'tag-extra': i >= VISIBLE_TAG_COUNT }} hidden={i >= VISIBLE_TAG_COUNT}>
+							<a class="u-chip" href={tagPath(tag)}>
+								#{tag}&nbsp;<span class="browse-count">({count})</span>
+							</a>
+						</li>
+					))}
+					{tags.length > VISIBLE_TAG_COUNT && (
+						<li>
+							<button
+								type="button"
+								class="button-secondary"
+								id="tag-toggle"
+								aria-expanded="false"
+								aria-controls="tag-list"
+								hidden
+							>
+								Show all
+							</button>
+						</li>
+					)}
+				</ul>
+				{/* Without JS the toggle can't work, so show every tag. */}
+				<noscript set:html="<style>.tag-extra { display: list-item !important; }</style>" />
 			</section>
 		)}
 
@@ -77,19 +82,7 @@ const tags = [...tagCounts.values()].sort((a, b) => a.tag.localeCompare(b.tag));
 </Layout>
 
 <style>
-	/* Keep the heading on the same line as the disclosure marker. */
 	.browse-heading {
-		display: inline;
-		font-size: var(--step-1);
-		line-height: var(--lh-1);
-	}
-
-	.browse-list {
-		margin-block-start: var(--space-2xs);
-		padding-inline-start: 1.1em;
-	}
-
-	.family-heading {
 		font-size: var(--step-1);
 		line-height: var(--lh-1);
 	}
@@ -103,3 +96,18 @@ const tags = [...tagCounts.values()].sort((a, b) => a.tag.localeCompare(b.tag));
 		color: var(--color-text-muted);
 	}
 </style>
+
+<script>
+	// "Show all" / "Hide all" for the tags beyond the first few.
+	const toggle = document.getElementById('tag-toggle');
+	const extras = document.querySelectorAll<HTMLElement>('#tag-list .tag-extra');
+	if (toggle && extras.length > 0) {
+		toggle.hidden = false;
+		toggle.addEventListener('click', () => {
+			const expanded = toggle.getAttribute('aria-expanded') !== 'true';
+			toggle.setAttribute('aria-expanded', String(expanded));
+			toggle.textContent = expanded ? 'Hide all' : 'Show all';
+			extras.forEach((el) => (el.hidden = !expanded));
+		});
+	}
+</script>

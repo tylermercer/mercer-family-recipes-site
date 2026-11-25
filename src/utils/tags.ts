@@ -34,3 +34,26 @@ export function uniqueTags(tags: Iterable<string>): string[] {
   }
   return [...bySlug.values()];
 }
+
+export interface TagCount {
+  tag: string;
+  count: number;
+}
+
+/**
+ * Counts how many recipes have each tag (deduplicated by slug) and sorts them most-used first,
+ * alphabetically within a tie. Takes each recipe's tag list.
+ */
+export function countTags(tagLists: Iterable<readonly string[]>): TagCount[] {
+  const bySlug = new Map<string, TagCount>();
+  for (const tags of tagLists) {
+    for (const slug of new Set(tags.map(tagSlug))) {
+      if (!slug) continue;
+      const tag = tags.find((t) => tagSlug(t) === slug)!;
+      const entry = bySlug.get(slug) ?? { tag: normalizeTag(tag), count: 0 };
+      entry.count++;
+      bySlug.set(slug, entry);
+    }
+  }
+  return [...bySlug.values()].sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+}
