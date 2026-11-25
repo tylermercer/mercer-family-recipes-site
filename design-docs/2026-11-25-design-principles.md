@@ -1,6 +1,6 @@
 # Design Principles (distilled from Innerhelm and the personal website)
 
-The sibling projects `../innerhelm` and `../personal-website` share a recognizable visual language. This doc records the decisions they have in common, so the recipe site can adopt the same style on purpose rather than by copying CSS. The concrete tokens and component rules for this site are in [the style guide](./2026-11-25-style-guide.md).
+The sibling projects `../innerhelm` and `../personal-website` share a recognizable visual language. This doc records the decisions they have in common, so the recipe site can adopt the same style on purpose rather than by copying CSS. The concrete tokens and component rules for this site are in [the style guide (`DESIGN.md`)](../DESIGN.md).
 
 ## 1. Sharp corners, everywhere
 
