@@ -212,7 +212,7 @@ This is the signature interaction, so give it the most care.
   - The text stays at full contrast. Don't fade it to gray, because that hurts legibility.
   - Instead, set a `--color-accent-soft` background and `text-decoration: line-through` with `text-decoration-color: var(--color-accent-strong)` and `text-decoration-thickness: 2px`.
 - **Quantities:** `tabular-nums`, and optionally bold the leading quantity so it scans as a column.
-- **Source strikethroughs are ignored.** Docs often carry strikethrough (`<del>`) left over from checking items off in Google Docs. Inside a checklist row it's neutralized, so only the checkbox state strikes a row through.
+- **Source strikethroughs are removed.** Docs often carry strikethrough left over from checking items off in Google Docs. The loader strips it (keeping the text) so only the checkbox state ever strikes a row through.
 
 ### Recipe list items (home, family, tag pages)
 

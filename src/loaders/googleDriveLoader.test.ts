@@ -709,6 +709,39 @@ describe('googleDriveLoader', () => {
     );
   });
 
+  it('strips strikethrough left over from Google Docs before rendering', async () => {
+    mockList.mockImplementation(async ({ q }) => {
+      if (q.includes("mimeType = 'application/vnd.google-apps.folder'")) return { data: { files: [] } };
+      return {
+        data: { files: [{ id: 'doc-1', name: 'Pancakes', mimeType: 'application/vnd.google-apps.document' }] },
+      };
+    });
+    mockExport.mockResolvedValue({
+      data: '# Pancakes\n\n- [x] ~~1 cup flour~~\n- [ ] 2 eggs, ~~beaten~~ whisked',
+    });
+
+    const loader = googleDriveLoader({
+      folderId: 'folder',
+      serviceAccountEmail: 'email@test.com',
+      privateKey: 'key',
+    });
+    const mockRenderMarkdown = vi.fn().mockResolvedValue({ html: '' });
+
+    await loader.load({
+      store: { clear: vi.fn(), set: vi.fn() } as any,
+      logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() } as any,
+      parseData: vi.fn().mockImplementation(async ({ data }) => data),
+      renderMarkdown: mockRenderMarkdown,
+      meta: {} as any,
+      generateDigest: vi.fn() as any,
+      config: {} as any,
+      cache: {} as any,
+      watcher: {} as any,
+    });
+
+    expect(mockRenderMarkdown).toHaveBeenCalledWith('- [x] 1 cup flour\n- [ ] 2 eggs, beaten whisked');
+  });
+
   it('catches and logs top-level API errors', async () => {
     mockList.mockRejectedValue(new Error('API quota exceeded'));
 
