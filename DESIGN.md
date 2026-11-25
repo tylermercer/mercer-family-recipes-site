@@ -190,7 +190,7 @@ Every focusable element gets the same ring: `outline: 3px solid var(--color-focu
 | Variant | Fill | Text | Border | Hover |
 |---|---|---|---|---|
 | **Primary** (one per view, e.g. "Back to all recipes") | `--color-accent` | `--color-on-accent` | none | `--color-text` fill, `--color-bg` text (inverts) |
-| **Secondary** (keep awake, copy ingredient list, reset checklist, theme toggle) | `--color-accent-soft` | `--color-text` | none | `--color-accent` fill, `--color-on-accent` text |
+| **Secondary** (keep awake, copy ingredient list, reset checklist, recipe scale, theme toggle) | `--color-accent-soft` | `--color-text` | none | `--color-accent` fill, `--color-on-accent` text |
 | **Danger** | `--color-danger` | `--color-bg` | none | `--color-text` fill, `--color-bg` text |
 
 Use the heading face at 700 weight with `--step--1`/`--step-0` sizes, and padding `var(--space-2xs) var(--space-s)`. Leave text in sentence case. Use **no transition on color**: the state change should be instant and crisp. Disabled buttons: `opacity: 0.55`, `cursor: not-allowed`, no hover change.
@@ -212,6 +212,7 @@ This is the signature interaction, so give it the most care.
   - The text stays at full contrast. Don't fade it to gray, because that hurts legibility.
   - Instead, set a `--color-accent-soft` background and `text-decoration: line-through` with `text-decoration-color: var(--color-accent-strong)` and `text-decoration-thickness: 2px`.
 - **Quantities:** `tabular-nums`, and optionally bold the leading quantity so it scans as a column.
+- **Scaling:** the "Scale" group (½× 1× 2× 3×) is a row of secondary buttons. The chosen factor has `aria-pressed="true"`, an accent fill, and an underline, so the state isn't carried by color alone. Scaled amounts are bold on a `--color-accent-soft` fill. While scaled, a label-voice note says only the ingredient list changes. At 1× the doc's own text comes back exactly.
 - **Source strikethroughs are removed.** Docs often carry strikethrough left over from checking items off in Google Docs. The loader strips it (keeping the text) so only the checkbox state ever strikes a row through.
 
 ### Recipe list items (home, family, tag pages)
