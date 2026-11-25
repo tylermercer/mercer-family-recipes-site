@@ -1,0 +1,36 @@
+---
+// Site search via Pagefind's Component UI. The /pagefind/ bundle is generated from the built
+// site by `pagefind --site dist/client` (see the build script), so search only works on a full
+// build, not under `astro dev`.
+---
+
+<!-- One wrapper element, so the search counts as a single item in flex layouts like the nav. -->
+<div class="site-search">
+	<link href="/pagefind/pagefind-component-ui.css" rel="stylesheet" />
+	<script is:inline src="/pagefind/pagefind-component-ui.js" type="module"></script>
+
+	<pagefind-config bundle-path="/pagefind/"></pagefind-config>
+	<pagefind-modal-trigger placeholder="Search recipes"></pagefind-modal-trigger>
+	<pagefind-modal></pagefind-modal>
+</div>
+
+<style is:global>
+	/*
+	 * Pagefind sets its defaults on :root, unlayered. html:root outranks that, and pointing the
+	 * variables at the Radix scales makes search follow the site's light/dark theme.
+	 */
+	html:root {
+		--pf-font: var(--font-body);
+		--pf-text: var(--gray-12);
+		--pf-text-secondary: var(--gray-11);
+		--pf-text-muted: var(--gray-11);
+		--pf-background: var(--gray-1);
+		--pf-border: var(--gray-7);
+		--pf-border-focus: var(--gray-8);
+		--pf-hover: var(--gray-3);
+		--pf-mark: var(--primary-11);
+		--pf-skeleton: var(--gray-3);
+		--pf-skeleton-shine: var(--gray-4);
+		--pf-outline-focus: var(--primary-8);
+	}
+</style>
