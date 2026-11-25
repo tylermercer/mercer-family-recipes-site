@@ -1,6 +1,7 @@
 import { defineCollection, reference } from 'astro:content';
 import { z } from "astro/zod";
-import { CONTRIBUTORS, googleDriveLoader } from './loaders/googleDriveLoader';
+import { googleDriveLoader } from './loaders/googleDriveLoader';
+import { CONTRIBUTORS } from '@utils/contributors';
 
 const recipes = defineCollection({
   loader: googleDriveLoader({

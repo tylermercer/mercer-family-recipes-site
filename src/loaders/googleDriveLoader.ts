@@ -4,21 +4,13 @@ import mammoth from 'mammoth';
 import TurndownService from 'turndown';
 import { rewriteDriveLinks, type LinkedDoc } from './rewriteDriveLinks';
 import { stripLeadingH1 } from './stripLeadingH1';
+import type { Contributor } from '@utils/contributors';
 
 export interface GoogleDriveLoaderOptions {
   folderId: string;
   serviceAccountEmail: string;
   privateKey: string;
 }
-
-export const CONTRIBUTORS = [
-  'Mom & Dad',
-  'Dan & Leanna',
-  'Eve & Tyler',
-  'EJ & Liza',
-  'Russell',
-] as const;
-export type Contributor = (typeof CONTRIBUTORS)[number];
 
 const DEFAULT_CONTRIBUTOR: Contributor = 'Mom & Dad';
 

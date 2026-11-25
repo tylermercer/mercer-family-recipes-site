@@ -2,6 +2,7 @@
 import { getCollection, getEntries, render } from 'astro:content';
 import Layout from '@layouts/Base.astro';
 import KeepAwakeToggle from '@components/KeepAwakeToggle.astro';
+import { contributorPath } from '@utils/contributorSlug';
 
 export async function getStaticPaths() {
   const recipes = await getCollection('recipes');
@@ -47,6 +48,11 @@ if (!recipe.isMock) {
 		<article class="l-space-m recipe-content">
 			<h1>{recipe.data.title}</h1>
 			<div class="l-cluster" style="opacity: 0.8; margin-bottom: 1.5rem;">
+				{recipe.data.contributor && (
+					<p class="u-step--1">
+						From <a href={contributorPath(recipe.data.contributor)}>{recipe.data.contributor}</a> &bull;
+					</p>
+				)}
 				{recipe.data.lastModified && (
 					<p class="u-step--1">
 						Last modified: {new Date(recipe.data.lastModified).toLocaleDateString()}

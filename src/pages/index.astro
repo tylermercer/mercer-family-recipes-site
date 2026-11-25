@@ -1,20 +1,17 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '@layouts/Base.astro';
+import RecipeList from '@components/RecipeList.astro';
+import { CONTRIBUTORS } from '@utils/contributors';
+import { contributorPath } from '@utils/contributorSlug';
 
 const allRecipes = await getCollection('recipes');
 
-const isWip = (title: string) => /\(wip\)/i.test(title);
-
-const regularRecipes = allRecipes
-	.filter((r) => !isWip(r.data.title))
-	.sort((a, b) => a.data.title.localeCompare(b.data.title));
-
-const wipRecipes = allRecipes
-	.filter((r) => isWip(r.data.title))
-	.sort((a, b) => a.data.title.localeCompare(b.data.title));
-
-const sortedRecipes = [...regularRecipes, ...wipRecipes];
+// Families in their canonical order, skipping any with no recipes yet.
+const families = CONTRIBUTORS.map((contributor) => ({
+	contributor,
+	count: allRecipes.filter((r) => r.data.contributor === contributor).length,
+})).filter((f) => f.count > 0);
 ---
 
 <Layout>
@@ -26,37 +23,46 @@ const sortedRecipes = [...regularRecipes, ...wipRecipes];
 			</p>
 		</section>
 
-		<section class="l-space-m">
-			{sortedRecipes.length === 0 ? (
-				<div class="l-box">
-					<p>No recipes found.</p>
-				</div>
-			) : (
-				<ul class="l-stack l-space-s" style="list-style-type: none; padding: 0;">
-					{sortedRecipes.map((recipe) => {
-						const wip = isWip(recipe.data.title);
-						return (
-							<li class="l-box">
-								<div class="l-cluster" style="align-items: center; justify-content: space-between; gap: 0.5rem;">
-									<a href={`/${recipe.id}`} style="font-weight: bold; font-size: 1.25rem;">
-										{recipe.data.title}
-									</a>
-									{wip && (
-										<span class="u-step--1" style="background-color: var(--gray-5); color: var(--gray-12); padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid var(--gray-7); text-transform: lowercase;">
-											work in progress
-										</span>
-									)}
-								</div>
-								{recipe.data.lastModified && (
-									<p class="u-step--1" style="margin-top: 0.25rem; opacity: 0.8;">
-										Last modified: {new Date(recipe.data.lastModified).toLocaleDateString()}
-									</p>
-								)}
-							</li>
-						);
-					})}
-				</ul>
-			)}
+		{families.length > 0 && (
+			<section class="l-stack l-space-s" aria-label="Browse recipes">
+				{families.length > 0 && (
+					<details>
+						<summary><h2 class="browse-heading">By family</h2></summary>
+						<ul class="l-cluster browse-list">
+							{families.map(({ contributor, count }) => (
+								<li>
+									<a href={contributorPath(contributor)}>{contributor}</a>{' '}
+									<span class="u-step--1" style="opacity: 0.8;">({count})</span>
+								</li>
+							))}
+						</ul>
+					</details>
+				)}
+			</section>
+		)}
+
+		<section class="l-space-m" aria-labelledby="all-recipes-heading">
+			<h2 id="all-recipes-heading">All recipes</h2>
+			<RecipeList recipes={allRecipes} />
 		</section>
 	</main>
 </Layout>
+
+<style>
+	summary {
+		cursor: pointer;
+	}
+
+	/* Keep the heading on the same line as the disclosure marker. */
+	.browse-heading {
+		display: inline;
+		font-size: var(--step-1);
+	}
+
+	.browse-list {
+		list-style-type: none;
+		padding: 0;
+		margin-top: 0.5rem;
+		gap: 0.5rem 1.5rem;
+	}
+</style>

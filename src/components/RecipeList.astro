@@ -1,0 +1,58 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+	recipes: CollectionEntry<'recipes'>[];
+	/** Show each recipe's contributor. Off on a single contributor's page, where it's redundant. */
+	showContributor?: boolean;
+}
+
+const { recipes, showContributor = true } = Astro.props;
+
+const isWip = (title: string) => /\(wip\)/i.test(title);
+const byTitle = (a: CollectionEntry<'recipes'>, b: CollectionEntry<'recipes'>) =>
+	a.data.title.localeCompare(b.data.title);
+
+// Work-in-progress recipes go last.
+const sortedRecipes = [
+	...recipes.filter((r) => !isWip(r.data.title)).sort(byTitle),
+	...recipes.filter((r) => isWip(r.data.title)).sort(byTitle),
+];
+---
+
+{sortedRecipes.length === 0 ? (
+	<div class="l-box">
+		<p>No recipes found.</p>
+	</div>
+) : (
+	<ul class="l-stack l-space-s" style="list-style-type: none; padding: 0;">
+		{sortedRecipes.map((recipe) => {
+			const wip = isWip(recipe.data.title);
+			const meta = [
+				showContributor ? recipe.data.contributor : undefined,
+				recipe.data.lastModified
+					? `Last modified: ${new Date(recipe.data.lastModified).toLocaleDateString()}`
+					: undefined,
+			].filter(Boolean);
+			return (
+				<li class="l-box">
+					<div class="l-cluster" style="align-items: center; justify-content: space-between; gap: 0.5rem;">
+						<a href={`/${recipe.id}`} style="font-weight: bold; font-size: 1.25rem;">
+							{recipe.data.title}
+						</a>
+						{wip && (
+							<span class="u-step--1" style="background-color: var(--gray-5); color: var(--gray-12); padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid var(--gray-7); text-transform: lowercase;">
+								work in progress
+							</span>
+						)}
+					</div>
+					{meta.length > 0 && (
+						<p class="u-step--1" style="margin-top: 0.25rem; opacity: 0.8;">
+							{meta.join(' • ')}
+						</p>
+					)}
+				</li>
+			);
+		})}
+	</ul>
+)}
