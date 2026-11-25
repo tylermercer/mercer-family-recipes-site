@@ -35,22 +35,23 @@ const tags = [...tagCounts.values()].sort((a, b) => a.tag.localeCompare(b.tag));
 			<Search />
 		</header>
 
-		{(families.length > 0 || tags.length > 0) && (
-			<section class="l-stack l-space-s" aria-label="Browse recipes">
-				{families.length > 0 && (
-					<details class="browse">
-						<summary><h2 class="browse-heading">By family</h2></summary>
-						<ul class="l-cluster l-space-2xs u-list-bare browse-list">
-							{families.map(({ contributor, count }) => (
-								<li>
-									<a class="u-chip" href={contributorPath(contributor)}>
-										{contributor}&nbsp;<span class="browse-count">({count})</span>
-									</a>
-								</li>
-							))}
-						</ul>
-					</details>
-				)}
+		{families.length > 0 && (
+			<section class="l-stack l-space-2xs" aria-labelledby="by-family-heading">
+				<h2 id="by-family-heading" class="family-heading">By family</h2>
+				<ul class="l-cluster l-space-2xs u-list-bare">
+					{families.map(({ contributor, count }) => (
+						<li>
+							<a class="u-chip" href={contributorPath(contributor)}>
+								{contributor}&nbsp;<span class="browse-count">({count})</span>
+							</a>
+						</li>
+					))}
+				</ul>
+			</section>
+		)}
+
+		{tags.length > 0 && (
+			<section class="l-stack l-space-s" aria-label="Browse recipes by tag">
 				{tags.length > 0 && (
 					<details class="browse">
 						<summary><h2 class="browse-heading">By tag</h2></summary>
@@ -86,6 +87,11 @@ const tags = [...tagCounts.values()].sort((a, b) => a.tag.localeCompare(b.tag));
 	.browse-list {
 		margin-block-start: var(--space-2xs);
 		padding-inline-start: 1.1em;
+	}
+
+	.family-heading {
+		font-size: var(--step-1);
+		line-height: var(--lh-1);
 	}
 
 	.browse-count {
