@@ -142,7 +142,7 @@ Raise the base size. Recipes are read from a distance.
 
 - **Base (`--step-0`):** 18px on mobile up to 20px on desktop. That's a Utopia `minFontSize: 18`, `maxFontSize: 20`, with the type scale ratio rising from 1.2 to 1.25.
 - **Body line-height:** 1.6. **Headings:** 1.1–1.25.
-- **Measure:** prose and steps at most ~65ch (`u-guttered`). Lists and indexes can use up to 90ch (`u-guttered-lg`).
+- **Measure:** every page uses the same centered ~65ch column (`u-guttered`), like Innerhelm's pages: recipes, the homepage, and the family/tag lists. `u-guttered-lg` (90ch) is reserved for future content that genuinely needs width, like a grid of photos.
 
 | Element | Size | Weight | Face | Notes |
 |---|---|---|---|---|
