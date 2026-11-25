@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Layout from '@layouts/Base.astro';
+import Search from '@components/Search.astro';
 import RecipeList from '@components/RecipeList.astro';
 import { CONTRIBUTORS } from '@utils/contributors';
 import { contributorPath } from '@utils/contributorSlug';
@@ -33,6 +34,7 @@ const tags = [...tagCounts.values()].sort((a, b) => a.tag.localeCompare(b.tag));
 			<p class="u-step-1">
 				A collection of recipes synced directly from Google Drive.
 			</p>
+			<Search />
 		</section>
 
 		{(families.length > 0 || tags.length > 0) && (

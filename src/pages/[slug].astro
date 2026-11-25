@@ -1,6 +1,7 @@
 ---
 import { getCollection, getEntries, render } from 'astro:content';
 import Layout from '@layouts/Base.astro';
+import Search from '@components/Search.astro';
 import KeepAwakeToggle from '@components/KeepAwakeToggle.astro';
 import { contributorPath } from '@utils/contributorSlug';
 import { tagPath } from '@utils/tags';
@@ -47,17 +48,18 @@ if (!recipe.isMock) {
 
 <Layout>
 	<main class="u-guttered-lg l-stack l-space-xl">
-		<nav class="l-space-s">
+		<nav class="l-cluster" style="justify-content: space-between;">
 			<a href="/" role="button">&larr; Back to all recipes</a>
+			<Search />
 		</nav>
-		<article class="l-space-m recipe-content">
-			<h1>{recipe.data.title}</h1>
-			<p class="u-step--1" style="opacity: 0.8; margin-top: 0.25rem; margin-bottom: 1.5rem;">
+		<article class="l-space-m recipe-content" data-pagefind-body>
+			<h1 data-pagefind-meta="title">{recipe.data.title}</h1>
+			<p class="u-step--1" style="opacity: 0.8; margin-top: 0.25rem; margin-bottom: 1.5rem;" data-pagefind-ignore>
 				{metaParts.map((part, i) => (
 					<Fragment>
 						{i > 0 && ' • '}
 						{part === 'contributor' && (
-							<span>From <a href={contributorPath(recipe.data.contributor)}>{recipe.data.contributor}</a></span>
+							<span>From <a href={contributorPath(recipe.data.contributor)} data-pagefind-filter="family">{recipe.data.contributor}</a></span>
 						)}
 						{part === 'lastModified' && (
 							<span>Last modified: {new Date(recipe.data.lastModified).toLocaleDateString()}</span>
@@ -69,13 +71,13 @@ if (!recipe.isMock) {
 				))}
 			</p>
 			{recipe.data.tags?.length > 0 && (
-				<ul class="l-cluster u-step--1" aria-label="Tags" style="list-style-type: none; padding: 0; gap: 0.25rem 0.75rem; margin-bottom: 1.5rem;">
+				<ul class="l-cluster u-step--1" aria-label="Tags" style="list-style-type: none; padding: 0; gap: 0.25rem 0.75rem; margin-bottom: 1.5rem;" data-pagefind-ignore>
 					{recipe.data.tags.map((tag: string) => (
-						<li><a href={tagPath(tag)}>#{tag}</a></li>
+						<li><a href={tagPath(tag)} data-pagefind-filter="tag[data-tag]" data-tag={tag}>#{tag}</a></li>
 					))}
 				</ul>
 			)}
-			<div class="l-cluster" style="margin-bottom: 1.5rem; gap: 0.75rem; align-items: center;">
+			<div class="l-cluster" style="margin-bottom: 1.5rem; gap: 0.75rem; align-items: center;" data-pagefind-ignore>
 				<KeepAwakeToggle />
 				<button id="reset-checklist-btn" type="button" class="u-step--1" style="display: none; padding: 0.25rem 0.5rem;">
 					Reset checklist
@@ -94,7 +96,7 @@ if (!recipe.isMock) {
 				)}
 			</div>
 			{relatedRecipes.length > 0 && (
-				<section class="l-space-s see-also" aria-labelledby="see-also-heading">
+				<section class="l-space-s see-also" aria-labelledby="see-also-heading" data-pagefind-ignore>
 					<h2 id="see-also-heading">See also</h2>
 					<ul>
 						{relatedRecipes.map((related) => (

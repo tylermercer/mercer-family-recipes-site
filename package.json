@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && node scripts/fix-wrangler-config.js",
+    "build": "astro build && node scripts/fix-wrangler-config.js && pagefind --site dist/client",
     "encrypt": "staticrypt ./dist/ -r --template-color-primary \"#CC5500\" --template-color-secondary \"#CC5500\" --template-title \"Mercer Family Recipes\"",
     "preview": "astro preview",
     "astro": "astro",
@@ -37,6 +37,7 @@
     "@types/word-extractor": "^1.0.6",
     "@vitest/coverage-v8": "^4.1.11",
     "jsdom": "^30.0.1",
+    "pagefind": "^1.6.0",
     "vitest": "^4.1.11",
     "wrangler": "^4.125.0"
   }
