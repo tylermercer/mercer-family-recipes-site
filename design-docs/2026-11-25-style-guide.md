@@ -8,7 +8,7 @@ A visual preview of the tokens and core components in both themes is in [`2026-1
 
 1. **Readable mid-task.** People use this site while cooking: a phone propped up across the counter, flour on their hands, a quick glance between steps. Text is large, high-contrast, and set in a typeface designed for legibility.
 2. **High contrast, everywhere.** All text meets **WCAG AAA (7:1)**. Borders and other non-text indicators meet at least 3:1. Neither theme has low-contrast "subtle gray" text.
-3. **Sharp and flat.** Square corners, solid borders, solid fills. No shadows, gradients, or rounded cards.
+3. **Sharp, flat, and quiet.** Square corners and solid fills. Borders only where a control needs one to be recognizable. Structure comes from spacing, fills, and the occasional accent rule. No shadows, gradients, or rounded cards.
 4. **Warm, not loud.** The yellow-orange is the kitchen-light accent: it marks what's actionable and what's done. It never fills large areas.
 
 ---
@@ -25,18 +25,18 @@ Semantic tokens replace the generated Radix `--primary-*` / `--gray-*` scales. C
 | `--color-surface` | Cards, list items, code, blockquotes | `#FAF3E3` | `#211C14` |
 | `--color-text` | Body text, headings, icons | `#17130C` | `#F7F1E4` |
 | `--color-text-muted` | Metadata, captions, labels | `#4D4536` | `#CFC4AE` |
-| `--color-border` | Control and card borders (2px) | `#17130C` | `#F7F1E4` |
-| `--color-rule` | Hairline dividers only (1px) | `#8C8270` | `#7A705E` |
+| `--color-border` | The few borders there are: checkboxes and text inputs | `#17130C` | `#F7F1E4` |
+| `--color-rule` | Rare 1px dividers (e.g. above the footer) | `#8C8270` | `#7A705E` |
 | `--color-accent` | Accent **fill**: primary buttons, checked boxes, highlights | `#F5A70A` | `#FFB51F` |
 | `--color-on-accent` | Text and icons on an accent fill | `#17130C` | `#14110C` |
-| `--color-accent-strong` | Accent as a **line or indicator**: blockquote rule, list markers, active tab | `#A86400` | `#FFB51F` |
+| `--color-accent-strong` | Accent as a **line or indicator**: blockquote rule, list markers, step numbers | `#A86400` | `#FFB51F` |
 | `--color-accent-soft` | Tinted backgrounds: hover rows, "done" ingredients, search highlights | `#FFE9B8` | `#3D2C0A` |
 | `--color-link` | Link text | `#764000` | `#FFC24D` |
 | `--color-link-hover` | Link hover and active | `#4A2800` | `#FFE0A3` |
 | `--color-focus` | Focus ring | `#17130C` | `#FFB51F` |
 | `--color-danger` | Destructive actions and errors (darker than the current `#d3003c`, which is only 5.4:1) | `#9E002D` | `#FF8FA6` |
 
-> ⚠️ **The light-mode accent is a fill, never text.** `#F5A70A` on the paper background is only **2.0:1**, so it can't be used for text and can't be the only edge of a control. In light mode, anything filled with the accent also gets a 2px `--color-border` outline, which is part of the look. For accent-colored *lines* in light mode, use `--color-accent-strong`.
+> ⚠️ **The light-mode accent is a fill, never text.** `#F5A70A` on the paper background is only **2.0:1**, so it can't be used for text or thin lines; use `--color-accent-strong` for accent-colored lines in light mode. Accent fills don't need an outline as long as they carry their own high-contrast content: a button's dark label (9.2:1), a check mark inside a bordered checkbox. Never use an accent fill *alone* to signal state.
 
 ### Measured contrast
 
@@ -147,7 +147,7 @@ Raise the base size. Recipes are read from a distance.
 | Element | Size | Weight | Face | Notes |
 |---|---|---|---|---|
 | `h1` (recipe title) | `--step-4` | 800 | heading | `text-wrap: balance` |
-| `h2` (Ingredients, Steps) | `--step-2` | 750 | heading | 3px `--color-accent-strong` bar on the left, `padding-inline-start: 0.5em` |
+| `h2` (Ingredients, Steps) | `--step-2` | 750 | heading | No decoration; size and weight carry it |
 | `h3` | `--step-1` | 700 | heading | |
 | Body | `--step-0` | 400 | body | |
 | Steps (`ol`) | `--step-0` | 400 | body | Numbers in heading face, 700, `--color-accent-strong` |
@@ -160,10 +160,14 @@ Headings use `--color-text`, not a tinted hue. Contrast takes priority over atmo
 ## Shape, borders, and space
 
 - **Corner radius: `0`. No exceptions** for buttons, inputs, cards, chips, modals, images, or focus rings. Circles are allowed only for things that are genuinely round.
-- **No shadows.** No `box-shadow` or `drop-shadow` for elevation. A popover or modal is set apart by a 2px `--color-border` outline and a backdrop.
-- **Borders have two weights:**
-  - `2px solid var(--color-border)` for anything you interact with or that defines a region: buttons, inputs, checkboxes, cards, the search box, modals.
-  - `1px solid var(--color-rule)` for dividers inside a region, such as between list rows or under a section.
+- **No shadows.** No `box-shadow` or `drop-shadow` for elevation. A modal is set apart by its backdrop and its `--color-bg` panel.
+- **Few borders.** Like Innerhelm and the personal website, a border is the exception. The full list:
+  - **Checkboxes:** `2px solid var(--color-border)`. An empty box has to be visible.
+  - **Text inputs** (the search box): `2px solid var(--color-border)`. A field has to read as a field.
+  - **Left accent rule** on blockquotes and tips: `3px solid var(--color-accent-strong)`. This is the one decorative line, shared with both sibling sites.
+  - **Focus ring** (an outline, not a border): see below.
+- **Everything else is borderless.** That covers buttons, cards, list rows, chips, badges, headings, disclosures, and modals. Separate items with space (the `l-stack` gap), group them with a `--color-surface` fill, and show state with `--color-accent-soft` or `--color-accent` fills.
+- **Dividers are rare.** Use a `1px --color-rule` line only where space alone can't separate two regions, such as above a footer. Never use one between list items.
 - **Space:** keep the Utopia space scale and the layout primitives (`l-stack`, `l-cluster`, `l-center`, `l-sidebar`). Prefer `gap` over margins.
 - **Touch targets:** at least 44×44px for anything tappable, especially the ingredient checkboxes and the keep-awake toggle.
 
@@ -185,15 +189,15 @@ Every focusable element gets the same ring: `outline: 3px solid var(--color-focu
 
 | Variant | Fill | Text | Border | Hover |
 |---|---|---|---|---|
-| **Primary** (one per view, e.g. "Back to all recipes", search) | `--color-accent` | `--color-on-accent` | 2px `--color-border` | `--color-text` fill, `--color-bg` text (inverts) |
-| **Secondary** (keep awake, reset checklist, theme toggle) | transparent | `--color-text` | 2px `--color-border` | `--color-accent-soft` fill |
-| **Danger** | transparent | `--color-danger` | 2px `--color-danger` | `--color-danger` fill, `--color-bg` text |
+| **Primary** (one per view, e.g. "Back to all recipes") | `--color-accent` | `--color-on-accent` | none | `--color-text` fill, `--color-bg` text (inverts) |
+| **Secondary** (keep awake, reset checklist, theme toggle) | `--color-accent-soft` | `--color-text` | none | `--color-accent` fill, `--color-on-accent` text |
+| **Danger** | `--color-danger` | `--color-bg` | none | `--color-text` fill, `--color-bg` text |
 
 Use the heading face at 700 weight with `--step--1`/`--step-0` sizes, and padding `var(--space-2xs) var(--space-s)`. Leave text in sentence case. Use **no transition on color**: the state change should be instant and crisp. Disabled buttons: `opacity: 0.55`, `cursor: not-allowed`, no hover change.
 
 ### Inputs (search box, any future forms)
 
-- `--color-bg` fill, 2px `--color-border`, radius 0, body face at `--step-0`.
+- `--color-bg` fill, 2px `--color-border`, radius 0, body face at `--step-0`. This is one of the few bordered elements.
 - Placeholder in `--color-text-muted`. It still has to meet 7:1, so the muted token works here.
 - Labels sit above the input in the label voice.
 
@@ -203,7 +207,7 @@ This is the signature interaction, so give it the most care.
 
 - **Checkbox:** a custom 1.25em square with a 2px `--color-border` outline and radius 0.
   - When checked, fill it with `--color-accent` and draw a `--color-on-accent` check mark.
-- **Row:** the whole row is the hit target, padded to at least 44px tall.
+- **Row:** the whole row is the hit target, padded to at least 44px tall. No dividers between rows; the padding separates them.
 - **Checked row:**
   - The text stays at full contrast. Don't fade it to gray, because that hurts legibility.
   - Instead, set a `--color-accent-soft` background and `text-decoration: line-through` with `text-decoration-color: var(--color-accent-strong)` and `text-decoration-thickness: 2px`.
@@ -211,19 +215,19 @@ This is the signature interaction, so give it the most care.
 
 ### Recipe list items (home, family, tag pages)
 
-- Flat rows separated by `1px --color-rule`, or cards with a 2px `--color-border` outline on `--color-surface`. Pick one and use it everywhere; rows are cleaner and recommended.
+- Plain, borderless rows separated by the `l-stack` gap. No dividers and no card outlines.
 - Title in the heading face at `--step-1`, 700. Metadata line in the label voice: `Mom & Dad • Last modified 9/26/2026`.
 - Hover: `--color-accent-soft` background across the whole row, with no movement or scaling.
-- The "work in progress" badge is a square chip: 2px `--color-border`, label voice, `--step--2`, no fill.
+- The "work in progress" badge is a square chip with an `--color-accent-soft` fill, label voice, `--step--2`, and no border.
 
 ### Tags and family chips
 
-Square chips with a 2px `--color-border` outline, `--color-text`, label voice, `#` prefix for tags. Hover uses an `--color-accent-soft` fill. The active or current chip has an `--color-accent` fill with `--color-on-accent` text.
+Borderless square chips: `--color-surface` fill, `--color-text`, label voice, `#` prefix for tags. Hover uses an `--color-accent-soft` fill. The active or current chip has an `--color-accent` fill with `--color-on-accent` text.
 
 ### Disclosure (`details` / `summary`: "By family", "By tag")
 
 - `summary` uses the heading face at `--step-1`, 700, with a custom square marker (`▸` / `▾`) in `--color-accent-strong`.
-- Open state: a 3px `--color-accent-strong` bar on the left of the content, like `h2`.
+- Open state: the content is indented under the summary text. No bar or border.
 
 ### Blockquotes, notes, and tips
 
@@ -244,7 +248,7 @@ html:root {
   --pf-text-secondary: var(--color-text-muted);
   --pf-text-muted: var(--color-text-muted);
   --pf-background: var(--color-bg);
-  --pf-border: var(--color-border);
+  --pf-border: var(--color-border); /* Pagefind uses this for the input; result cards are borderless below */
   --pf-border-focus: var(--color-focus);
   --pf-border-radius: 0;
   --pf-hover: var(--color-accent-soft);
@@ -258,6 +262,8 @@ html:root {
   --pf-skeleton-shine: var(--color-accent-soft);
 }
 ```
+
+Pagefind also outlines its result cards with `--pf-border`. Override those to `border: none` and separate results with a `--color-surface` fill, so the input stays the only bordered element in the modal.
 
 ---
 
@@ -282,10 +288,10 @@ Recipes get printed, so print gets real styles (adapted from Innerhelm):
 | Do | Don't |
 |---|---|
 | Use the accent as a **fill** with dark text on it | Put the light-mode accent on text or thin lines |
-| Outline accent fills with a 2px `--color-border` in light mode | Rely on the yellow edge alone to show a button's shape |
+| Separate items with space and fills | Add borders or dividers between list items, cards, or buttons |
 | Keep muted text at the `--color-text-muted` token (≥7:1) | Lower opacity to de-emphasize text |
 | Mark done ingredients with a tint and strikethrough | Gray out done ingredients |
-| Use square corners and flat borders | Add `border-radius`, shadows, or gradients |
+| Use square corners and flat fills | Add `border-radius`, shadows, or gradients |
 | Use `gap` and the layout primitives | Hand-tune margins per component |
 
 ---
@@ -299,7 +305,7 @@ The site currently generates Radix scales from `#CC5500` (burnt orange) in `src/
 | `--gray-1` | `--color-bg` |
 | `--gray-3`, `--gray-4` | `--color-surface` |
 | `--gray-5`, `--gray-6` | `--color-accent-soft` (hover) or `--color-surface` |
-| `--gray-7`, `--gray-8` | `--color-border` (controls) or `--color-rule` (dividers) |
+| `--gray-7`, `--gray-8` | Usually remove the border. Keep `--color-border` only for checkboxes and inputs. |
 | `--gray-11` | `--color-text-muted` |
 | `--gray-12` | `--color-text` |
 | `--gray-contrast` | `--color-on-accent` |
@@ -312,7 +318,7 @@ Suggested order:
 
 1. Add the tokens and fonts.
 2. Swap `base.scss`.
-3. Restyle the components (buttons, checklist, list rows, chips, details).
+3. Restyle the components (buttons, checklist, list rows, chips, details), removing borders as you go.
 4. Update the Pagefind mapping.
 5. Remove the Radix color generation and the `opacity: 0.8` metadata styles.
 6. Add print styles.
