@@ -69,7 +69,7 @@ vi.mock('googleapis', () => {
 });
 
 describe('processDocIngredients', () => {
-  it('prepends - to lines in paragraphs where majority of non-empty lines start with numbers', () => {
+  it('prepends - [ ] to lines in paragraphs where majority of non-empty lines start with numbers', () => {
     const input = `Title Paragraph
 
 Ingredients:
@@ -89,11 +89,11 @@ Bake at 350 for 20 mins.`;
 
 Ingredients:
 
-- 2 cups flour
-- 1/2 tsp salt
-- 1 tsp baking powder
-- 1 egg
-- pinch of cinnamon
+- [ ] 2 cups flour
+- [ ] 1/2 tsp salt
+- [ ] 1 tsp baking powder
+- [ ] 1 egg
+- [ ] pinch of cinnamon
 
 Instructions:
 Mix dry ingredients.
@@ -108,9 +108,9 @@ Bake at 350 for 20 mins.`;
 • 1 tsp vanilla
 ¾ cup sugar`;
 
-    const expected = `- ½ cup butter
-- 1 tsp vanilla
-- ¾ cup sugar`;
+    const expected = `- [ ] ½ cup butter
+- [ ] 1 tsp vanilla
+- [ ] ¾ cup sugar`;
 
     expect(processDocIngredients(input)).toBe(expected);
   });
