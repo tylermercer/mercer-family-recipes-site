@@ -8,7 +8,7 @@ import rawFonts from './lib/plugins/vite/rawFonts.js';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://mercer-fam-recipes.tmercer.workers.dev',
+  site: 'https://familyrecipes.tylermercer.net',
   adapter: cloudflare({
     session: false,
   }),
