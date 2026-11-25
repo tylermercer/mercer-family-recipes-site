@@ -75,5 +75,5 @@ Innerhelm has full `@media print` rules: backgrounds dropped, text forced to nea
 **Push further here:**
 
 1. **Contrast.** Both sites use mid-tone grays for secondary text (Innerhelm's labels are `gray-500`), and those fall below WCAG AAA. This site should hold all text to at least 7:1.
-2. **Borders.** Use a near-black (or near-white, in dark mode) 2px border as the main way to define controls and cards, not just a decoration.
+2. **Strong edges where edges exist.** Keep borders as rare as the sibling sites do, but where one is needed (checkboxes, text inputs), make it full-contrast and 2px instead of a pale gray.
 3. **Legibility over atmosphere.** Recipes get read mid-task, at arm's length, on a phone propped against a backsplash. Choose a hyperlegible face over a literary serif, and use larger sizes and touch targets.
