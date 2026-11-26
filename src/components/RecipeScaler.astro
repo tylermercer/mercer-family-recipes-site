@@ -13,24 +13,27 @@ import { MAX_SCALE_FACTOR } from '@utils/parseScaleFactor';
 
 <div id="recipe-scaler" class="recipe-scaler l-cluster l-space-3xs" role="group" aria-labelledby="recipe-scaler-label" hidden>
   <span id="recipe-scaler-label" class="recipe-scaler-label">Scale</span>
-  {FACTORS.map(({ value, label }) => (
-    <button type="button" class="button-secondary" data-factor={value} aria-pressed={value === 1 ? 'true' : 'false'}>
-      {label}
-    </button>
-  ))}
-  <label class="recipe-scaler-custom">
-    <span class="u-sr-only">Other scale, like 1.5 or 2/3</span>
-    <input
-      id="recipe-scaler-input"
-      type="text"
-      inputmode="decimal"
-      autocomplete="off"
-      spellcheck="false"
-      placeholder="Other"
-      aria-describedby="recipe-scaler-error"
-    />
-    <span aria-hidden="true">×</span>
-  </label>
+  <!-- One flex item, so on narrow screens the whole set drops below "Scale" before it wraps. -->
+  <div class="recipe-scaler-controls l-cluster l-space-3xs">
+    {FACTORS.map(({ value, label }) => (
+      <button type="button" class="button-secondary" data-factor={value} aria-pressed={value === 1 ? 'true' : 'false'}>
+        {label}
+      </button>
+    ))}
+    <label class="recipe-scaler-custom">
+      <span class="u-sr-only">Other scale, like 1.5 or 2/3</span>
+      <input
+        id="recipe-scaler-input"
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="Other"
+        aria-describedby="recipe-scaler-error"
+      />
+      <span aria-hidden="true">×</span>
+    </label>
+  </div>
   <p id="recipe-scaler-error" class="recipe-scaler-error u-label" hidden>
     Enter a number like 1.5 or 2/3, up to {MAX_SCALE_FACTOR}.
   </p>
@@ -141,6 +144,12 @@ import { MAX_SCALE_FACTOR } from '@utils/parseScaleFactor';
 <style>
   .recipe-scaler {
     align-items: center;
+  }
+
+  .recipe-scaler-controls {
+    align-items: center;
+    /* Shrink to the line once it's on its own row, then wrap inside. */
+    min-inline-size: 0;
   }
 
   .recipe-scaler-label {
