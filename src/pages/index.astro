@@ -79,7 +79,7 @@ const tags = countTags(allRecipes.map((r) => r.data.tags));
 
 		<section class="l-stack l-space-s" aria-labelledby="all-recipes-heading">
 			<h2 id="all-recipes-heading">All recipes</h2>
-			<RecipeList recipes={allRecipes} />
+			<RecipeList recipes={allRecipes} favoritesFirst />
 		</section>
 	</main>
 </Layout>
