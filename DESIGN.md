@@ -162,8 +162,8 @@ Headings use `--color-text`, not a tinted hue. Contrast takes priority over atmo
 - **Corner radius: `0`. No exceptions** for buttons, inputs, cards, chips, modals, images, or focus rings. Circles are allowed only for things that are genuinely round.
 - **No shadows.** No `box-shadow` or `drop-shadow` for elevation. A modal is set apart by its backdrop and its `--color-bg` panel.
 - **Few borders.** Like Innerhelm and the personal website, a border is the exception. The full list:
-  - **Checkboxes:** `2px solid var(--color-border)`. An empty box has to be visible.
-  - **Text inputs** (the search box): `1px solid var(--color-border)`. A field has to read as a field, but thinner than a checkbox so an idle field never looks focused.
+  - **Checkboxes:** `1px solid var(--color-border)`. An empty box has to be visible.
+  - **Text inputs** (the search box): `1px solid var(--color-border)`. A field has to read as a field. Borders stay 1px so an idle field never looks focused; the focus ring is the heavy line.
   - **Left accent rule** on blockquotes and tips: `3px solid var(--color-accent-strong)`. This is the one decorative line, shared with both sibling sites.
   - **Focus ring** (an outline, not a border): see below.
 - **Everything else is borderless.** That covers buttons, cards, list rows, chips, badges, headings, disclosures, and modals. Separate items with space (the `l-stack` gap), group them with a `--color-surface` fill, and show state with `--color-accent-soft` or `--color-accent` fills.
@@ -209,7 +209,7 @@ Above the ingredients sit the scale controls; under them, "Keep screen awake" as
 
 This is the signature interaction, so give it the most care.
 
-- **Checkbox:** a custom 1.25em square with a 2px `--color-border` outline and radius 0.
+- **Checkbox:** a custom 1.25em square with a 1px `--color-border` border and radius 0.
   - When checked, fill it with `--color-accent` and draw a `--color-on-accent` check mark.
 - **Row:** the whole row is the hit target, padded to at least 44px tall. No dividers between rows; the padding separates them.
 - **Checked row:**
