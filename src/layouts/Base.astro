@@ -2,7 +2,6 @@
 import '@fontsource-variable/atkinson-hyperlegible-next';
 import '@fontsource-variable/figtree';
 import '@styles/index.scss';
-import ThemeToggle from '@components/ThemeToggle.astro';
 
 const title = "Family Recipes";
 
@@ -25,7 +24,7 @@ const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 		<meta name="generator" content={Astro.generator} />
 		<!--
 			Browser chrome matches --color-bg in each theme (see DESIGN.md). The media queries follow
-			the system setting; the script below and ThemeToggle (via syncThemeColorMeta) point both
+			the system setting; the script below and ThemeToggle (in NavBar, via syncThemeColorMeta) point both
 			tags at the pinned theme's color when there's an override.
 		-->
 		<meta name="theme-color" content={themeColors.light} media="(prefers-color-scheme: light)"
@@ -69,9 +68,6 @@ const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 	</head>
 	<body>
 		<slot />
-		<footer class="site-footer u-guttered u-hide-on-print">
-			<ThemeToggle />
-		</footer>
 	</body>
 </html>
 
@@ -81,10 +77,3 @@ const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 	logCommitHash();
 </script>
 
-<style>
-	.site-footer {
-		display: flex;
-		justify-content: flex-end;
-		padding-block-start: 0;
-	}
-</style>

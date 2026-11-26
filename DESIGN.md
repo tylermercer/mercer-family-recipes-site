@@ -329,4 +329,4 @@ Suggested order:
 4. Update the Pagefind mapping.
 5. Remove the Radix color generation and the `opacity: 0.8` metadata styles.
 6. Add print styles.
-7. Place `ThemeToggle` in the page chrome.
+7. Place `ThemeToggle` in the page chrome: the `NavBar` component puts it top right, across from the page's title or back button.

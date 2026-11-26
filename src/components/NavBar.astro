@@ -1,0 +1,42 @@
+---
+// The top bar of every page: whatever the page slots in on the left (the homepage title, or a
+// back button) and the theme toggle on the right. Use it once per page, since the toggle has an id.
+import ThemeToggle from '@components/ThemeToggle.astro';
+---
+
+<div class="navbar">
+	<div class="navbar-start">
+		<slot />
+	</div>
+	<div class="navbar-end u-hide-on-print">
+		<ThemeToggle />
+	</div>
+</div>
+
+<style>
+	/* Top-aligned, with the toggle centered on the first line of whatever's in the slot, so a
+	   title that wraps on a phone keeps the toggle beside its first line. */
+	.navbar {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: var(--space-s);
+	}
+
+	.navbar-start {
+		min-inline-size: 0;
+	}
+
+	.navbar-end {
+		display: flex;
+		align-items: center;
+		flex: none;
+	}
+
+	/* Match the h1's first line box (same size and line height) and center the toggle in it. */
+	.navbar:has(> .navbar-start > :global(h1)) .navbar-end {
+		font-size: var(--step-4);
+		line-height: var(--lh-4);
+		block-size: 1lh;
+	}
+</style>

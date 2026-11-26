@@ -1,6 +1,7 @@
 ---
 import { getCollection, getEntries, render } from 'astro:content';
 import Layout from '@layouts/Base.astro';
+import NavBar from '@components/NavBar.astro';
 import KeepAwakeToggle from '@components/KeepAwakeToggle.astro';
 import CopyIngredientsButton from '@components/CopyIngredientsButton.astro';
 import RecipeScaler from '@components/RecipeScaler.astro';
@@ -49,9 +50,11 @@ if (!recipe.isMock) {
 
 <Layout>
 	<main class="u-guttered l-stack l-space-l">
-		<nav class="u-hide-on-print">
-			<a href="/" role="button">&larr; All recipes</a>
-		</nav>
+		<NavBar>
+			<nav class="u-hide-on-print">
+				<a href="/" role="button">&larr; All recipes</a>
+			</nav>
+		</NavBar>
 		<article class="l-stack l-space-m recipe-content" data-pagefind-body>
 			<header class="l-stack l-space-2xs">
 				<h1 data-pagefind-meta="title">{recipe.data.title}</h1>
