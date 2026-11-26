@@ -190,7 +190,7 @@ Every focusable element gets the same ring: `outline: 3px solid var(--color-focu
 | Variant | Fill | Text | Border | Hover |
 |---|---|---|---|---|
 | **Primary** (one per view, e.g. "Back to all recipes") | `--color-accent` | `--color-on-accent` | none | `--color-text` fill, `--color-bg` text (inverts) |
-| **Secondary** (copy ingredient list, reset checklist, recipe scale, theme toggle) | `--color-accent-soft` | `--color-text` | none | `--color-accent` fill, `--color-on-accent` text |
+| **Secondary** (favorite, copy ingredient list, reset checklist, recipe scale, theme toggle) | `--color-accent-soft` | `--color-text` | none | `--color-accent` fill, `--color-on-accent` text |
 | **Danger** | `--color-danger` | `--color-bg` | none | `--color-text` fill, `--color-bg` text |
 
 Use the heading face at 700 weight with `--step--1`/`--step-0` sizes, and padding `var(--space-2xs) var(--space-s)`. Leave text in sentence case. Use **no transition on color**: the state change should be instant and crisp. Disabled buttons: `opacity: 0.55`, `cursor: not-allowed`, no hover change.
@@ -225,6 +225,8 @@ This is the signature interaction, so give it the most care.
 - Title in the heading face at `--step-1`, 700. Metadata line in the label voice: `Mom & Dad • Last modified 9/26/2026`.
 - Hover: `--color-accent-soft` background across the whole row, with no movement or scaling.
 - The "work in progress" badge is a square chip with an `--color-accent-soft` fill, label voice, `--step--2`, and no border.
+
+- **Favorites** (saved per browser in localStorage) get a small filled star after the title in `--color-accent-strong`, which keeps titles aligned. The homepage list moves them to the top in alphabetical order. On a recipe page the "Favorite" button sits under the meta line: pressed, it takes an accent fill and its outline star fills in, so the state isn't carried by color alone.
 
 ### Tags and family chips
 

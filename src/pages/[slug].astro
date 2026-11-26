@@ -3,6 +3,7 @@ import { getCollection, getEntries, render } from 'astro:content';
 import Layout from '@layouts/Base.astro';
 import NavBar from '@components/NavBar.astro';
 import KeepAwakeToggle from '@components/KeepAwakeToggle.astro';
+import FavoriteButton from '@components/FavoriteButton.astro';
 import CopyIngredientsButton from '@components/CopyIngredientsButton.astro';
 import RecipeScaler from '@components/RecipeScaler.astro';
 import { contributorPath } from '@utils/contributorSlug';
@@ -93,6 +94,9 @@ if (!recipe.isMock) {
 						))}
 					</ul>
 				)}
+				<div class="u-hide-on-print" data-pagefind-ignore>
+					<FavoriteButton recipeId={recipe.id} />
+				</div>
 			</header>
 			<div class="recipe-tools l-stack l-space-2xs u-hide-on-print" data-pagefind-ignore>
 				<RecipeScaler />
