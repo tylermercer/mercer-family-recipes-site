@@ -22,6 +22,7 @@
     if (!ingredientListText(content)) return;
 
     button.hidden = false;
+    button.closest('details')?.removeAttribute('hidden');
     let resetTimer: number | undefined;
 
     function show(message: string) {

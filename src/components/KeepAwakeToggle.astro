@@ -3,7 +3,7 @@
 
 <div class="keep-awake-container">
   <label class="keep-awake-label">
-    <input type="checkbox" id="keep-awake-toggle" class="keep-awake-checkbox" aria-label="Keep screen awake" />
+    <input type="checkbox" id="keep-awake-toggle" class="keep-awake-checkbox" />
     <span class="keep-awake-text">Keep screen awake</span>
   </label>
 </div>
@@ -77,33 +77,16 @@
     user-select: none;
   }
 
-  /* Styled like a secondary button: borderless accent-soft fill, square. */
+  /* A plain labeled checkbox; the label pads it out to a 44px touch target. */
   .keep-awake-label {
     display: inline-flex;
     align-items: center;
     gap: 0.6em;
     min-block-size: 44px;
-    padding: var(--space-2xs) var(--space-s);
-    background-color: var(--color-accent-soft);
-    color: var(--color-text);
     font-family: var(--font-heading);
     font-size: var(--step--1);
     font-weight: 700;
     cursor: pointer;
-  }
-
-  .keep-awake-label:hover:not(:has(:disabled)) {
-    background-color: var(--color-accent);
-    color: var(--color-on-accent);
-  }
-
-  .keep-awake-label:has(.keep-awake-checkbox:focus-visible) {
-    outline: 3px solid var(--color-focus);
-    outline-offset: 2px;
-  }
-
-  .keep-awake-checkbox:focus-visible {
-    outline: none;
   }
 
   .keep-awake-label:has(.keep-awake-checkbox:disabled) {
