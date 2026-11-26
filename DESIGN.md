@@ -25,7 +25,7 @@ Semantic tokens replace the generated Radix `--primary-*` / `--gray-*` scales. C
 | `--color-surface` | Cards, list items, code, blockquotes | `#FAF3E3` | `#211C14` |
 | `--color-text` | Body text, headings, icons | `#17130C` | `#F7F1E4` |
 | `--color-text-muted` | Metadata, captions, labels | `#4D4536` | `#CFC4AE` |
-| `--color-border` | The few borders there are: checkboxes and text inputs | `#17130C` | `#F7F1E4` |
+| `--color-border` | The few borders there are: checkboxes and text inputs. Deliberately quieter than text, so an idle field never looks focused | `#7A705E` | `#8A806C` |
 | `--color-rule` | Rare 1px dividers (e.g. above the footer) | `#8C8270` | `#7A705E` |
 | `--color-accent` | Accent **fill**: primary buttons, checked boxes, highlights | `#F5A70A` | `#FFB51F` |
 | `--color-on-accent` | Text and icons on an accent fill | `#17130C` | `#14110C` |
@@ -56,7 +56,7 @@ Ratios below are WCAG 2.x contrast ratios.
 | `link-hover` on `bg` | 12.9 | 14.7 | 7:1 |
 | `on-accent` on `accent` | 9.2 | 10.7 | 7:1 |
 | `danger` on `bg` / `surface` | 8.3 / 7.6 | 8.7 / 7.8 | 7:1 |
-| `border` on `bg` / `surface` | 18.2 / 16.7 | 16.7 / 15.0 | 3:1 |
+| `border` on `bg` / `surface` / `accent-soft` | 4.8 / 4.4 / 4.1 | 4.8 / 4.3 / 3.5 | 3:1 |
 | `accent-strong` on `bg` / `surface` | 4.6 / 4.2 | 10.7 / 9.6 | 3:1 |
 | `rule` on `bg` | 3.7 | 3.9 | 3:1 |
 | `accent` on `bg` | 2.0 ⚠️ | 10.7 | fill only |
@@ -75,7 +75,7 @@ Theme switching keeps the existing mechanism: the system preference by default, 
         --color-surface: #FAF3E3;
         --color-text: #17130C;
         --color-text-muted: #4D4536;
-        --color-border: #17130C;
+        --color-border: #7A705E;
         --color-rule: #8C8270;
         --color-accent: #F5A70A;
         --color-on-accent: #17130C;
@@ -93,7 +93,7 @@ Theme switching keeps the existing mechanism: the system preference by default, 
         --color-surface: #211C14;
         --color-text: #F7F1E4;
         --color-text-muted: #CFC4AE;
-        --color-border: #F7F1E4;
+        --color-border: #8A806C;
         --color-rule: #7A705E;
         --color-accent: #FFB51F;
         --color-on-accent: #14110C;
@@ -162,8 +162,8 @@ Headings use `--color-text`, not a tinted hue. Contrast takes priority over atmo
 - **Corner radius: `0`. No exceptions** for buttons, inputs, cards, chips, modals, images, or focus rings. Circles are allowed only for things that are genuinely round.
 - **No shadows.** No `box-shadow` or `drop-shadow` for elevation. A modal is set apart by its backdrop and its `--color-bg` panel.
 - **Few borders.** Like Innerhelm and the personal website, a border is the exception. The full list:
-  - **Checkboxes:** `1px solid var(--color-border)`. An empty box has to be visible.
-  - **Text inputs** (the search box): `1px solid var(--color-border)`. A field has to read as a field. Borders stay 1px so an idle field never looks focused; the focus ring is the heavy line.
+  - **Checkboxes:** `2px solid var(--color-border)`. An empty box has to be visible.
+  - **Text inputs** (the search box): `2px solid var(--color-border)`. A field has to read as a field. The border color is mid-contrast (about 4.8:1) so an idle field never looks focused; the focus ring is the high-contrast line.
   - **Left accent rule** on blockquotes and tips: `3px solid var(--color-accent-strong)`. This is the one decorative line, shared with both sibling sites.
   - **Focus ring** (an outline, not a border): see below.
 - **Everything else is borderless.** That covers buttons, cards, list rows, chips, badges, headings, disclosures, and modals. Separate items with space (the `l-stack` gap), group them with a `--color-surface` fill, and show state with `--color-accent-soft` or `--color-accent` fills.
@@ -197,7 +197,7 @@ Use the heading face at 700 weight with `--step--1`/`--step-0` sizes, and paddin
 
 ### Inputs (search box, any future forms)
 
-- `--color-bg` fill, 1px `--color-border`, radius 0, body face at `--step-0`. This is one of the few bordered elements.
+- `--color-bg` fill, 2px `--color-border`, radius 0, body face at `--step-0`. This is one of the few bordered elements.
 - Placeholder in `--color-text-muted`. It still has to meet 7:1, so the muted token works here.
 - Labels sit above the input in the label voice.
 
@@ -209,7 +209,7 @@ Above the ingredients sit the scale controls; under them, "Keep screen awake" as
 
 This is the signature interaction, so give it the most care.
 
-- **Checkbox:** a custom 1.25em square with a 1px `--color-border` border and radius 0.
+- **Checkbox:** a custom 1.25em square with a 2px `--color-border` border and radius 0.
   - When checked, fill it with `--color-accent` and draw a `--color-on-accent` check mark.
 - **Row:** the whole row is the hit target, padded to at least 44px tall. No dividers between rows; the padding separates them.
 - **Checked row:**
