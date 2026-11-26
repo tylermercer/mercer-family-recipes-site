@@ -3,13 +3,33 @@ import '@fontsource-variable/atkinson-hyperlegible-next';
 import '@fontsource-variable/figtree';
 import '@styles/index.scss';
 
-const title = "Family Recipes";
+const SITE_NAME = 'Family Recipes';
+const DEFAULT_DESCRIPTION = 'Recipes from across the Mercer family, ready to cook from.';
 
-const description = "Recipes from across the Mercer family, ready to cook from.";
+interface Props {
+	/** The page's own title, e.g. a recipe name. Omit on the homepage to use the site name. */
+	title?: string;
+	description?: string;
+	/** "article" for a recipe, "website" for everything else. */
+	ogType?: 'website' | 'article';
+	/** When the page's content last changed, for article:modified_time. */
+	modified?: Date;
+	/**
+	 * Up to two extra label/value pairs that Slack shows under the description
+	 * (twitter:label1/data1, twitter:label2/data2), e.g. { From: 'Mom & Dad' }.
+	 */
+	details?: Record<string, string>;
+}
+
+const { title, description = DEFAULT_DESCRIPTION, ogType = 'website', modified, details = {} } = Astro.props;
+const documentTitle = title ? `${title} · ${SITE_NAME}` : SITE_NAME;
+const ogTitle = title ?? SITE_NAME;
+const detailPairs = Object.entries(details).slice(0, 2);
 
 // Social preview: one static image for every page (public/og-image.png, 1200×600).
 // Crawlers need absolute URLs, built from `site` in astro.config.mjs.
 const ogImage = new URL('/og-image.png', Astro.site);
+const ogImageAlt = 'Family Recipes: the Mercer family cookbook, with an ingredient checklist.';
 const pageUrl = new URL(Astro.url.pathname, Astro.site);
 
 // --color-bg for each theme (src/styles/theme.scss).
@@ -31,24 +51,34 @@ const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 			data-scheme="light" data-theme-color-light={themeColors.light} data-theme-color-dark={themeColors.dark} />
 		<meta name="theme-color" content={themeColors.dark} media="(prefers-color-scheme: dark)"
 			data-scheme="dark" data-theme-color-light={themeColors.light} data-theme-color-dark={themeColors.dark} />
-		<title>{title}</title>
+		<title>{documentTitle}</title>
 		<meta name="description" content={description} />
 		<link rel="canonical" href={pageUrl} />
 
-		<meta property="og:type" content="website" />
-		<meta property="og:site_name" content="Family Recipes" />
-		<meta property="og:title" content={title} />
+		<!-- Link previews (Slack, Discord, Mattermost, iMessage) read these. -->
+		<meta property="og:type" content={ogType} />
+		<meta property="og:site_name" content={SITE_NAME} />
+		<meta property="og:locale" content="en_US" />
+		<meta property="og:title" content={ogTitle} />
 		<meta property="og:description" content={description} />
 		<meta property="og:url" content={pageUrl} />
 		<meta property="og:image" content={ogImage} />
 		<meta property="og:image:type" content="image/png" />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="600" />
-		<meta property="og:image:alt" content="Family Recipes: the Mercer family cookbook, with an ingredient checklist." />
+		<meta property="og:image:alt" content={ogImageAlt} />
+		{modified && <meta property="article:modified_time" content={modified.toISOString()} />}
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content={title} />
+		<meta name="twitter:title" content={ogTitle} />
 		<meta name="twitter:description" content={description} />
 		<meta name="twitter:image" content={ogImage} />
+		<meta name="twitter:image:alt" content={ogImageAlt} />
+		{detailPairs.map(([label, data], i) => (
+			<Fragment>
+				<meta name={`twitter:label${i + 1}`} content={label} />
+				<meta name={`twitter:data${i + 1}`} content={data} />
+			</Fragment>
+		))}
 		<script is:inline>
 			(function () {
 				const stored = localStorage.getItem('theme');

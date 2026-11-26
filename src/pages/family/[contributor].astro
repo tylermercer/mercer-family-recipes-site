@@ -20,7 +20,10 @@ export async function getStaticPaths() {
 const { contributor, recipes } = Astro.props;
 ---
 
-<Layout>
+<Layout
+	title={`${contributor}'s recipes`}
+	description={`Recipes from ${contributor} in the Mercer family cookbook.`}
+>
 	<main class="u-guttered l-stack l-space-xl">
 		<NavBar>
 			<nav>

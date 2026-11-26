@@ -7,6 +7,7 @@ import CopyIngredientsButton from '@components/CopyIngredientsButton.astro';
 import RecipeScaler from '@components/RecipeScaler.astro';
 import { contributorPath } from '@utils/contributorSlug';
 import { tagPath } from '@utils/tags';
+import { recipeDescription } from '@utils/recipeDescription';
 
 export async function getStaticPaths() {
   const recipes = await getCollection('recipes');
@@ -39,6 +40,11 @@ const { recipe } = Astro.props;
 const metaParts = (['contributor', 'lastModified', 'driveUrl'] as const).filter(
 	(key) => recipe.data[key],
 );
+// Link-preview metadata: who it's from and its first ingredients.
+const description = recipe.isMock ? undefined : recipeDescription(recipe.data.contributor, recipe.rendered?.html ?? '');
+const details: Record<string, string> = {};
+if (recipe.data.contributor) details.From = recipe.data.contributor;
+if (recipe.data.tags?.length) details.Tags = recipe.data.tags.map((tag: string) => `#${tag}`).join(' ');
 let Content = null;
 let relatedRecipes: Awaited<ReturnType<typeof getEntries<'recipes'>>> = [];
 if (!recipe.isMock) {
@@ -48,7 +54,13 @@ if (!recipe.isMock) {
 }
 ---
 
-<Layout>
+<Layout
+	title={recipe.data.title}
+	description={description}
+	ogType="article"
+	modified={new Date(recipe.data.lastModified)}
+	details={details}
+>
 	<main class="u-guttered l-stack l-space-l">
 		<NavBar>
 			<nav class="u-hide-on-print">
