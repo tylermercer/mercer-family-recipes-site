@@ -55,6 +55,14 @@
 		border-radius: 0 !important;
 	}
 
+	/*
+	 * Full width of the guttered column it sits in. The button is already 100% wide; this widens
+	 * its host, which Pagefind's later-loading stylesheet sets to inline-block.
+	 */
+	.site-search pagefind-modal-trigger {
+		display: block;
+	}
+
 	pagefind-modal-trigger .pf-trigger-btn {
 		border-width: 2px !important;
 		font-family: var(--font-body);
