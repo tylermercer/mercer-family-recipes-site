@@ -190,7 +190,7 @@ Every focusable element gets the same ring: `outline: 3px solid var(--color-focu
 | Variant | Fill | Text | Border | Hover |
 |---|---|---|---|---|
 | **Primary** (one per view, e.g. "Back to all recipes") | `--color-accent` | `--color-on-accent` | none | `--color-text` fill, `--color-bg` text (inverts) |
-| **Secondary** (keep awake, copy ingredient list, reset checklist, recipe scale, theme toggle) | `--color-accent-soft` | `--color-text` | none | `--color-accent` fill, `--color-on-accent` text |
+| **Secondary** (copy ingredient list, reset checklist, recipe scale, theme toggle) | `--color-accent-soft` | `--color-text` | none | `--color-accent` fill, `--color-on-accent` text |
 | **Danger** | `--color-danger` | `--color-bg` | none | `--color-text` fill, `--color-bg` text |
 
 Use the heading face at 700 weight with `--step--1`/`--step-0` sizes, and padding `var(--space-2xs) var(--space-s)`. Leave text in sentence case. Use **no transition on color**: the state change should be instant and crisp. Disabled buttons: `opacity: 0.55`, `cursor: not-allowed`, no hover change.
@@ -200,6 +200,10 @@ Use the heading face at 700 weight with `--step--1`/`--step-0` sizes, and paddin
 - `--color-bg` fill, 2px `--color-border`, radius 0, body face at `--step-0`. This is one of the few bordered elements.
 - Placeholder in `--color-text-muted`. It still has to meet 7:1, so the muted token works here.
 - Labels sit above the input in the label voice.
+
+### Recipe tools
+
+Above the ingredients sit the scale controls; under them, "Keep screen awake" as a plain labeled checkbox (label voice, no button fill) and the "More options" disclosure for the less-used actions.
 
 ### Ingredient checklist
 
@@ -229,6 +233,7 @@ Borderless square chips: `--color-surface` fill, `--color-text`, label voice, `#
 ### Disclosure (`details` / `summary`: "By family", "By tag")
 
 - `summary` uses the heading face at `--step-1`, 700, with a custom square marker (`▸` / `▾`) in `--color-accent-strong`.
+- Small disclosures, like a recipe's "More options" (which holds "Copy ingredient list" and "Reset checklist"), use `--step--1` and a 44px-tall summary.
 - Open state: the content is indented under the summary text. No bar or border.
 
 ### Blockquotes, notes, and tips

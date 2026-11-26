@@ -79,13 +79,21 @@ if (!recipe.isMock) {
 					</ul>
 				)}
 			</header>
-			<div class="l-cluster l-space-2xs u-hide-on-print" data-pagefind-ignore>
-				<KeepAwakeToggle />
-				<CopyIngredientsButton />
-				<button id="reset-checklist-btn" type="button" class="button-secondary" hidden>
-					Reset checklist
-				</button>
+			<div class="recipe-tools l-stack l-space-2xs u-hide-on-print" data-pagefind-ignore>
 				<RecipeScaler />
+				<div class="l-cluster l-space-m recipe-tools-row">
+					<KeepAwakeToggle />
+					<!-- Shown once a script reveals one of the buttons inside. -->
+					<details class="recipe-more" hidden>
+						<summary>More options</summary>
+						<div class="l-cluster l-space-2xs recipe-more-buttons">
+							<CopyIngredientsButton />
+							<button id="reset-checklist-btn" type="button" class="button-secondary" hidden>
+								Reset checklist
+							</button>
+						</div>
+					</details>
+				</div>
 			</div>
 			<p id="recipe-scaler-note" class="u-label u-hide-on-print" hidden>
 				Only the ingredient list is scaled. Adjust amounts in the steps, cooking times, and pan sizes yourself.
@@ -126,6 +134,7 @@ if (!recipe.isMock) {
 			const resetBtn = document.getElementById('reset-checklist-btn');
 			if (resetBtn) {
 				resetBtn.hidden = false;
+				resetBtn.closest('details')?.removeAttribute('hidden');
 			}
 
 			const storageKey = `recipe-checkboxes-${window.location.pathname}`;
@@ -187,3 +196,21 @@ if (!recipe.isMock) {
 		}
 	</script>
 </Layout>
+
+<style>
+	.recipe-tools-row {
+		align-items: flex-start;
+		row-gap: 0;
+	}
+
+	.recipe-more > summary {
+		display: inline-flex;
+		align-items: center;
+		min-block-size: 44px;
+		font-size: var(--step--1);
+	}
+
+	.recipe-more-buttons {
+		padding-inline-start: 1.1em;
+	}
+</style>
