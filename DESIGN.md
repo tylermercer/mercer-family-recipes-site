@@ -163,7 +163,7 @@ Headings use `--color-text`, not a tinted hue. Contrast takes priority over atmo
 - **No shadows.** No `box-shadow` or `drop-shadow` for elevation. A modal is set apart by its backdrop and its `--color-bg` panel.
 - **Few borders.** Like Innerhelm and the personal website, a border is the exception. The full list:
   - **Checkboxes:** `2px solid var(--color-border)`. An empty box has to be visible.
-  - **Text inputs** (the search box): `2px solid var(--color-border)`. A field has to read as a field.
+  - **Text inputs** (the search box): `1px solid var(--color-border)`. A field has to read as a field, but thinner than a checkbox so an idle field never looks focused.
   - **Left accent rule** on blockquotes and tips: `3px solid var(--color-accent-strong)`. This is the one decorative line, shared with both sibling sites.
   - **Focus ring** (an outline, not a border): see below.
 - **Everything else is borderless.** That covers buttons, cards, list rows, chips, badges, headings, disclosures, and modals. Separate items with space (the `l-stack` gap), group them with a `--color-surface` fill, and show state with `--color-accent-soft` or `--color-accent` fills.
@@ -197,7 +197,7 @@ Use the heading face at 700 weight with `--step--1`/`--step-0` sizes, and paddin
 
 ### Inputs (search box, any future forms)
 
-- `--color-bg` fill, 2px `--color-border`, radius 0, body face at `--step-0`. This is one of the few bordered elements.
+- `--color-bg` fill, 1px `--color-border`, radius 0, body face at `--step-0`. This is one of the few bordered elements.
 - Placeholder in `--color-text-muted`. It still has to meet 7:1, so the muted token works here.
 - Labels sit above the input in the label voice.
 
