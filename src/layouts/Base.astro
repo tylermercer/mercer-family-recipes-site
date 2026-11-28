@@ -135,5 +135,9 @@ const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 	import logCommitHash from "lib/logCommitHash";
 	// This makes it easy to see which version of the site is being served
 	logCommitHash();
+
+	import { getSessionStorage, recordSessionEntry } from '@utils/sessionEntry';
+	// The first page of the session, so a recipe's back button knows whether there's a page to go back to.
+	recordSessionEntry(getSessionStorage(), location.pathname);
 </script>
 

@@ -1,0 +1,60 @@
+---
+// Share button for the navbar, shown only in the installed app (standalone, fullscreen, or
+// minimal-ui), where there's no browser toolbar to share from, and only where the Web Share API
+// exists. It shares the page's canonical URL, so links point at the live site.
+interface Props {
+	/** What the share sheet shows as the title, e.g. the recipe name. */
+	title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<button type="button" class="share-button button-secondary" data-share-title={title} hidden>
+	<!-- Each platform's own share glyph: box-and-arrow on Apple devices, connected dots elsewhere. -->
+	<svg class="share-icon-apple" aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square" d="M12 3v12M7.5 7.5 12 3l4.5 4.5M8 10H5v11h14V10h-3"/></svg>
+	<svg class="share-icon-other" aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><circle cx="18" cy="5" r="3" fill="currentColor"/><circle cx="6" cy="12" r="3" fill="currentColor"/><circle cx="18" cy="19" r="3" fill="currentColor"/><path stroke="currentColor" stroke-width="2" d="m8.6 10.7 6.8-4M8.6 13.3l6.8 4"/></svg>
+	<span class="u-sr-only">Share</span>
+</button>
+
+<script>
+	const INSTALLED_APP = '(display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui)';
+
+	function isInstalledApp(): boolean {
+		// iOS before 16.4 doesn't match display-mode, but sets navigator.standalone.
+		return window.matchMedia(INSTALLED_APP).matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
+	}
+
+	const isApple = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
+
+	document.querySelectorAll<HTMLButtonElement>('.share-button').forEach((button) => {
+		if (!isInstalledApp() || typeof navigator.share !== 'function') return;
+		button.dataset.platform = isApple ? 'apple' : 'other';
+		button.hidden = false;
+		button.addEventListener('click', async () => {
+			const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href;
+			try {
+				await navigator.share({ title: button.dataset.shareTitle || document.title, url: canonical || location.href });
+			} catch (err) {
+				// AbortError just means the share sheet was closed.
+				if ((err as DOMException)?.name !== 'AbortError') console.error('Share failed:', err);
+			}
+		});
+	});
+</script>
+
+<style>
+	.share-button {
+		min-inline-size: 44px;
+		padding-inline: var(--space-2xs);
+	}
+
+	.share-button svg {
+		display: none;
+	}
+
+	.share-button[data-platform='apple'] .share-icon-apple,
+	.share-button[data-platform='other'] .share-icon-other {
+		display: inline;
+	}
+</style>

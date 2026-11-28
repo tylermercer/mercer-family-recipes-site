@@ -6,6 +6,7 @@ import KeepAwakeToggle from '@components/KeepAwakeToggle.astro';
 import FavoriteButton from '@components/FavoriteButton.astro';
 import CopyIngredientsButton from '@components/CopyIngredientsButton.astro';
 import RecipeScaler from '@components/RecipeScaler.astro';
+import ShareButton from '@components/ShareButton.astro';
 import { contributorPath } from '@utils/contributorSlug';
 import { tagPath } from '@utils/tags';
 import { recipeDescription } from '@utils/recipeDescription';
@@ -69,8 +70,9 @@ if (!recipe.isMock) {
 				<div class="recipe-navbar" data-pagefind-ignore>
 					<NavBar>
 						<nav class="u-hide-on-print">
-							<a href="/" role="button">&larr; All recipes</a>
+							<a href="/" role="button" data-back-link>&larr; All recipes</a>
 						</nav>
+						<ShareButton slot="actions" title={recipe.data.title} />
 					</NavBar>
 				</div>
 				<h1 data-pagefind-meta="title">{recipe.data.title}</h1>
@@ -144,6 +146,20 @@ if (!recipe.isMock) {
 			)}
 		</article>
 	</main>
+
+	<script>
+		import { getSessionStorage, shouldNavigateBack } from '@utils/sessionEntry';
+
+		// Back to wherever the recipe was opened from (a tag page, a search, another recipe), like an
+		// app's back button. On the session's first page there's nothing of ours behind it, so the
+		// link to the homepage is followed instead.
+		document.querySelector<HTMLAnchorElement>('a[data-back-link]')?.addEventListener('click', (event) => {
+			if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+			if (!shouldNavigateBack(getSessionStorage(), location.pathname, history.length)) return;
+			event.preventDefault();
+			history.back();
+		});
+	</script>
 
 	<script>
 		function initCheckboxes() {
