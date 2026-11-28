@@ -27,6 +27,7 @@ const { recipeId } = Astro.props;
 
 <script>
 	import { isFavorite, setFavorite } from '@utils/favorites';
+	import { confirmHaptic } from '@utils/haptics';
 
 	function render(button: HTMLButtonElement) {
 		const id = button.dataset.recipeId!;
@@ -48,7 +49,10 @@ const { recipeId } = Astro.props;
 			button.dataset.ready = 'true';
 			button.addEventListener('click', () => {
 				const next = button.getAttribute('aria-pressed') !== 'true';
-				button.setAttribute('aria-pressed', String(setFavorite(id, next)));
+				const saved = setFavorite(id, next);
+				button.setAttribute('aria-pressed', String(saved));
+				// A tick to confirm it was saved (Android; iOS can't vibrate). Unfavoriting stays quiet.
+				if (next && saved) confirmHaptic();
 			});
 		}
 	}
