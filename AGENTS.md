@@ -50,3 +50,7 @@ This project uses [Vitest](https://vitest.dev/) for unit testing utility functio
   - Always write unit tests when creating new utility functions or modifying existing ones in `src/utils/` or helper modules.
   - Mock browser APIs (like `window.location` or `localStorage`) cleanly using Vitest utilities (`vi.fn()`, `vi.spyOn()`) and reset mocks after tests.
   - Maintain thorough test coverage for edge cases, null/undefined inputs, and environment variable states.
+
+## Git
+
+- **Never create merge commits.** To bring a branch up to date with `main`, rebase it onto `main` (`git rebase origin/main`) and push with `git push --force-with-lease`. Don't use `git merge` or `git pull` without `--rebase` or `--ff-only`.
