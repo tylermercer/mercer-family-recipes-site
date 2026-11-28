@@ -1,6 +1,7 @@
 ---
 // Served by the service worker (src/service-worker.ts) in place of any page that isn't cached
-// while the network is down. It lists the pages this browser has cached, which still open offline.
+// while the network is down: a page that isn't part of the site, or one the worker hasn't saved yet. It
+// lists the pages this browser has saved, which still open offline.
 import Layout from '@layouts/Base.astro';
 import NavBar from '@components/NavBar.astro';
 ---
@@ -19,7 +20,7 @@ import NavBar from '@components/NavBar.astro';
 
 		<section class="l-stack l-space-s saved-pages" aria-labelledby="saved-heading" hidden>
 			<h2 id="saved-heading">Saved on this device</h2>
-			<p>Recipes you’ve opened before still work without a connection:</p>
+			<p>These pages are saved on this device and work without a connection:</p>
 			<ul class="l-stack l-space-2xs" data-saved-pages></ul>
 		</section>
 	</main>

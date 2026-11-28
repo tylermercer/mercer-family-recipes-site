@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
 	cacheStrategyFor,
 	pageCacheKeys,
+	pagePathsFromBuild,
 	pageTitleFromDocumentTitle,
+	stalePageUrls,
 	type RoutableRequest,
 } from '@utils/serviceWorkerRouting';
 
@@ -97,5 +99,50 @@ describe('pageTitleFromDocumentTitle', () => {
 
 	it('handles an empty title', () => {
 		expect(pageTitleFromDocumentTitle('')).toBe('');
+	});
+});
+
+describe('pagePathsFromBuild', () => {
+	it('turns Astro pathnames into slash-wrapped paths', () => {
+		expect(pagePathsFromBuild(['', 'pumpkin-cookies/', 'tags/dinner/', 'offline/'])).toEqual([
+			'/',
+			'/offline/',
+			'/pumpkin-cookies/',
+			'/tags/dinner/',
+		]);
+	});
+
+	it('adds a missing trailing slash and drops duplicates', () => {
+		expect(pagePathsFromBuild(['pumpkin-cookies', '/pumpkin-cookies/'])).toEqual(['/pumpkin-cookies/']);
+	});
+
+	it('leaves out the 404 page', () => {
+		expect(pagePathsFromBuild(['404', '404/', ''])).toEqual(['/']);
+	});
+
+	it('returns nothing for no pages', () => {
+		expect(pagePathsFromBuild([])).toEqual([]);
+	});
+});
+
+describe('stalePageUrls', () => {
+	const pages = ['/', '/offline/', '/pumpkin-cookies/'];
+
+	it('keeps pages that are still built', () => {
+		expect(stalePageUrls([`${ORIGIN}/`, `${ORIGIN}/pumpkin-cookies/`], pages)).toEqual([]);
+	});
+
+	it('returns pages that no longer exist', () => {
+		expect(stalePageUrls([`${ORIGIN}/pumpkin-cookies/`, `${ORIGIN}/deleted-recipe/`], pages)).toEqual([
+			`${ORIGIN}/deleted-recipe/`,
+		]);
+	});
+
+	it('returns entries saved under a slashless path, since the slashed one replaces them', () => {
+		expect(stalePageUrls([`${ORIGIN}/pumpkin-cookies`], pages)).toEqual([`${ORIGIN}/pumpkin-cookies`]);
+	});
+
+	it('ignores the query string when matching', () => {
+		expect(stalePageUrls([`${ORIGIN}/pumpkin-cookies/?scale=2`], pages)).toEqual([]);
 	});
 });

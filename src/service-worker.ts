@@ -1,15 +1,29 @@
 /// <reference lib="webworker" />
 // Bundled to /sw.js by src/integrations/service-worker.ts after each build, and registered by
 // Base.astro in production only. Recipes stay readable in the kitchen when the connection drops:
-// every page you open is kept, and the build output is fetched up front so cached pages render
-// with their styles, fonts, and scripts.
+// the build output is fetched up front so cached pages render with their styles, fonts, and
+// scripts, and every page of the site is then saved in the background (see cacheAllPages), so a
+// recipe opens offline even if it's never been opened on this device.
 
-import { CACHE_NAMES, cacheStrategyFor, pageCacheKeys } from '@utils/serviceWorkerRouting';
+import {
+	ALL_PAGES_MARKER,
+	CACHE_NAMES,
+	cacheStrategyFor,
+	pageCacheKeys,
+	stalePageUrls,
+} from '@utils/serviceWorkerRouting';
 
 export type {};
 declare const self: ServiceWorkerGlobalScope;
 /** Filled in at build time: the homepage, the offline page, and every file under /_astro/. */
 declare const __PRECACHE_URLS__: string[];
+/** Filled in at build time: every built page's path, e.g. "/", "/pumpkin-cookies/", "/tags/dinner/". */
+declare const __PAGE_PATHS__: string[];
+/** Filled in at build time: a hash of every built page, which changes when any page does. */
+declare const __BUILD_ID__: string;
+
+/** How many pages to fetch at once while saving them all. */
+const SAVE_CONCURRENCY = 4;
 
 const OFFLINE_URL = '/offline/';
 
@@ -53,6 +67,52 @@ self.addEventListener('fetch', (event) => {
 	else if (strategy === 'immutable') event.respondWith(cacheFirst(event));
 	else if (strategy === 'network-first') event.respondWith(networkFirst(event));
 });
+
+// Pages ask for the full save on each load (Base.astro). It's a message rather than part of install
+// or activate, since waiting on ~100 fetches there would hold up the worker taking over, and a
+// message event keeps the worker alive until the save finishes.
+let savingAllPages: Promise<void> | null = null;
+
+self.addEventListener('message', (event) => {
+	if (event.data?.type !== 'CACHE_ALL_PAGES') return;
+	savingAllPages ??= cacheAllPages().finally(() => {
+		savingAllPages = null;
+	});
+	event.waitUntil(savingAllPages);
+});
+
+/**
+ * Saves every page of this build into the pages cache, fresh from the network, and drops saved
+ * pages that no longer exist. Pages are still network-first, so this only matters offline. Skipped
+ * once a build's pages are all saved; a page that fails leaves the marker unset, so the next page
+ * load tries again.
+ */
+async function cacheAllPages(): Promise<void> {
+	const meta = await caches.open(CACHE_NAMES.META);
+	if ((await (await meta.match(ALL_PAGES_MARKER))?.text()) === __BUILD_ID__) return;
+
+	const cache = await caches.open(CACHE_NAMES.PAGES);
+	const queue = [...__PAGE_PATHS__];
+	let failed = false;
+	const worker = async () => {
+		for (let path = queue.shift(); path !== undefined; path = queue.shift()) {
+			try {
+				// no-cache: revalidate with the server, so the HTTP cache can't hand back an old copy.
+				const response = await fetch(new Request(path, { cache: 'no-cache' }));
+				if (response.ok && !response.redirected) await cache.put(path, response);
+				else failed = true;
+			} catch {
+				failed = true;
+			}
+		}
+	};
+	await Promise.all(Array.from({ length: SAVE_CONCURRENCY }, worker));
+
+	const cachedUrls = (await cache.keys()).map((request) => request.url);
+	await Promise.all(stalePageUrls(cachedUrls, __PAGE_PATHS__).map((url) => cache.delete(url)));
+
+	if (!failed) await meta.put(ALL_PAGES_MARKER, new Response(__BUILD_ID__));
+}
 
 function putInCache(event: FetchEvent, cacheName: string, response: Response): void {
 	const copy = response.clone();

@@ -119,11 +119,17 @@ const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 			</script>
 		) : (
 			// Offline support (src/service-worker.ts). Pages are network-first, so a new worker taking
-			// over doesn't need a reload; skipping it keeps checked-off ingredients in place.
+			// over doesn't need a reload; skipping it keeps checked-off ingredients in place. Once a
+			// worker is running, it's asked to save every page for offline use (a no-op once they're
+			// saved), unless the browser's data saver is on.
 			<script is:inline>
 				if ('serviceWorker' in navigator) {
 					window.addEventListener('load', function () {
 						navigator.serviceWorker.register('/sw.js');
+						navigator.serviceWorker.ready.then(function (registration) {
+							if (navigator.connection && navigator.connection.saveData) return;
+							if (registration.active) registration.active.postMessage({ type: 'CACHE_ALL_PAGES' });
+						});
 					});
 				}
 			</script>
