@@ -4,6 +4,7 @@ import { defineConfig } from 'astro/config';
 import { unified } from '@astrojs/markdown-remark';
 import remarkEmdash from './lib/plugins/remark/emdash.js';
 import rawFonts from './lib/plugins/vite/rawFonts.js';
+import serviceWorker from './src/integrations/service-worker.ts';
 
 // https://astro.build/config
 export default defineConfig({
@@ -11,6 +12,9 @@ export default defineConfig({
   adapter: cloudflare({
     session: false,
   }),
+  integrations: [
+    serviceWorker({ src: './src/service-worker.ts' }),
+  ],
   markdown: {
     processor: unified(),
     remarkPlugins: [remarkEmdash],

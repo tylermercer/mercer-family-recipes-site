@@ -1,0 +1,67 @@
+---
+// Served by the service worker (src/service-worker.ts) in place of any page that isn't cached
+// while the network is down. It lists the pages this browser has cached, which still open offline.
+import Layout from '@layouts/Base.astro';
+import NavBar from '@components/NavBar.astro';
+---
+
+<Layout title="You’re offline" noindex>
+	<main class="u-guttered l-stack l-space-l">
+		<header class="u-hero l-stack l-space-s">
+			<NavBar>
+				<nav>
+					<a href="/" role="button">&larr; All recipes</a>
+				</nav>
+			</NavBar>
+			<h1>You’re offline</h1>
+			<p class="u-step-1">This page hasn’t been saved on this device yet. Check your connection and try again.</p>
+		</header>
+
+		<section class="l-stack l-space-s saved-pages" aria-labelledby="saved-heading" hidden>
+			<h2 id="saved-heading">Saved on this device</h2>
+			<p>Recipes you’ve opened before still work without a connection:</p>
+			<ul class="l-stack l-space-2xs" data-saved-pages></ul>
+		</section>
+	</main>
+</Layout>
+
+<script>
+	import { CACHE_NAMES, pageTitleFromDocumentTitle } from '@utils/serviceWorkerRouting';
+
+	const SKIP = new Set(['/', '/offline/']);
+
+	async function savedPages(): Promise<{ path: string; title: string }[]> {
+		const cache = await caches.open(CACHE_NAMES.PAGES);
+		const parser = new DOMParser();
+		const pages: { path: string; title: string }[] = [];
+		for (const request of await cache.keys()) {
+			const { pathname } = new URL(request.url);
+			if (SKIP.has(pathname)) continue;
+			const response = await cache.match(request);
+			if (!response?.headers.get('Content-Type')?.includes('text/html')) continue;
+			const doc = parser.parseFromString(await response.text(), 'text/html');
+			const title = pageTitleFromDocumentTitle(doc.title);
+			if (title) pages.push({ path: pathname, title });
+		}
+		return pages.sort((a, b) => a.title.localeCompare(b.title));
+	}
+
+	if ('caches' in window) {
+		savedPages()
+			.then((pages) => {
+				const section = document.querySelector<HTMLElement>('.saved-pages');
+				const list = document.querySelector('[data-saved-pages]');
+				if (!section || !list || pages.length === 0) return;
+				for (const { path, title } of pages) {
+					const item = document.createElement('li');
+					const link = document.createElement('a');
+					link.href = path;
+					link.textContent = title;
+					item.append(link);
+					list.append(item);
+				}
+				section.hidden = false;
+			})
+			.catch((err) => console.error('Could not list saved pages:', err));
+	}
+</script>
