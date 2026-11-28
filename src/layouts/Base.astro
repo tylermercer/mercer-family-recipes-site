@@ -119,17 +119,12 @@ const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 			</script>
 		) : (
 			// Offline support (src/service-worker.ts). Pages are network-first, so a new worker taking
-			// over doesn't need a reload; skipping it keeps checked-off ingredients in place. Once a
-			// worker is running, it's asked to save every page for offline use (it downloads only pages
-			// that are new or changed since it last saved them), unless the browser's data saver is on.
+			// over doesn't need a reload; skipping it keeps checked-off ingredients in place. In the
+			// installed app, the script below also has it save every page.
 			<script is:inline>
 				if ('serviceWorker' in navigator) {
 					window.addEventListener('load', function () {
 						navigator.serviceWorker.register('/sw.js');
-						navigator.serviceWorker.ready.then(function (registration) {
-							if (navigator.connection && navigator.connection.saveData) return;
-							if (registration.active) registration.active.postMessage({ type: 'CACHE_ALL_PAGES' });
-						});
 					});
 				}
 			</script>
@@ -152,5 +147,15 @@ const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 	document.addEventListener('contextmenu', (event) => {
 		if (shouldSuppressLinkMenu(event.target, isInstalledApp())) event.preventDefault();
 	});
+
+	// The installed app keeps the whole cookbook offline: once the worker is running, ask it to save
+	// every page (it downloads only pages that are new or changed since it last saved them). In a
+	// browser tab it keeps only the pages you open, and nothing extra is fetched with data saver on.
+	const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+	if (import.meta.env.PROD && 'serviceWorker' in navigator && isInstalledApp() && !saveData) {
+		navigator.serviceWorker.ready.then((registration) => {
+			registration.active?.postMessage({ type: 'CACHE_ALL_PAGES' });
+		});
+	}
 </script>
 
