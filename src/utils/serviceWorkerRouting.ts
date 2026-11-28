@@ -12,7 +12,12 @@ export const CACHE_NAMES = {
 	PRECACHE: 'precache-v1',
 	PAGES: 'pages-v1',
 	ASSETS: 'assets-v1',
+	/** Bookkeeping: which build's pages have all been saved (see ALL_PAGES_MARKER). */
+	META: 'meta-v1',
 } as const;
+
+/** Key in CACHE_NAMES.META whose body is the build id whose pages are all in CACHE_NAMES.PAGES. */
+export const ALL_PAGES_MARKER = '/__all-pages-saved__';
 
 export type CacheStrategy =
 	/** HTML pages: network first, falling back to the cached copy, then the offline page. */
@@ -76,4 +81,28 @@ export function pageTitleFromDocumentTitle(documentTitle: string, siteName = 'Fa
 	const title = documentTitle.trim();
 	const suffix = ` · ${siteName}`;
 	return title.endsWith(suffix) ? title.slice(0, -suffix.length).trim() : title;
+}
+
+/**
+ * The paths the worker saves for offline use, from the pathnames Astro reports at the end of a
+ * build ("", "slug/", "tags/dinner/"): every built page as the browser ends up requesting it, with a
+ * leading and trailing slash. The 404 page is left out, and duplicates are dropped.
+ */
+export function pagePathsFromBuild(pathnames: string[]): string[] {
+	const paths = new Set<string>();
+	for (const pathname of pathnames) {
+		const trimmed = pathname.replace(/^\/+|\/+$/g, '');
+		if (trimmed === '404') continue;
+		paths.add(trimmed === '' ? '/' : `/${trimmed}/`);
+	}
+	return [...paths].sort();
+}
+
+/**
+ * Saved page URLs that aren't pages of the current build any more (a deleted or renamed recipe),
+ * so the worker can drop them instead of offering them offline forever.
+ */
+export function stalePageUrls(cachedUrls: string[], pagePaths: string[]): string[] {
+	const current = new Set(pagePaths);
+	return cachedUrls.filter((url) => !current.has(new URL(url).pathname));
 }
