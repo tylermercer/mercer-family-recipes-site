@@ -68,6 +68,15 @@
         -webkit-user-drag: none;
     }
 
+    // iOS's long-press link preview isn't a contextmenu event, so Base.astro's handler can't stop
+    // it; this does, on the same navigation links (appNavigation.ts), in the installed app only.
+    @media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+        a[role=button],
+        a.u-chip {
+            -webkit-touch-callout: none;
+        }
+    }
+
     // Element display rules below (e.g. button) would otherwise beat the UA's [hidden].
     [hidden] {
         display: none !important;
