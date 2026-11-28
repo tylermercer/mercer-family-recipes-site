@@ -1,7 +1,7 @@
 ---
 // The top bar of every page: whatever the page slots in on the left (the homepage title, or a
-// back button) and, on the right, the install button (when the browser offers one) and the theme
-// toggle. Use it once per page, since both have ids.
+// back button) and, on the right, any page actions slotted into "actions" (e.g. Share), the install
+// button (when the browser offers one), and the theme toggle. Use it once per page, since both have ids.
 import InstallAppButton from '@components/InstallAppButton.astro';
 import ThemeToggle from '@components/ThemeToggle.astro';
 ---
@@ -11,6 +11,7 @@ import ThemeToggle from '@components/ThemeToggle.astro';
 		<slot />
 	</div>
 	<div class="navbar-end u-hide-on-print">
+		<slot name="actions" />
 		<InstallAppButton />
 		<ThemeToggle />
 	</div>
