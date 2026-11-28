@@ -31,7 +31,7 @@ Semantic tokens replace the generated Radix `--primary-*` / `--gray-*` scales. C
 | `--color-on-accent` | Text and icons on an accent fill | `#17130C` | `#14110C` |
 | `--color-accent-strong` | Accent as a **line or indicator**: blockquote rule, list markers, step numbers | `#A86400` | `#FFB51F` |
 | `--color-accent-soft` | Tinted backgrounds: hover rows, "done" ingredients, search highlights | `#FFE9B8` | `#3D2C0A` |
-| `--color-pattern` | The wave pattern on the title band (decoration only, never text) | `#EEDFBE` | `#30291D` |
+| `--color-pattern` | The tiled pattern on the title band (decoration only, never text) | `#EEDFBE` | `#30291D` |
 | `--color-link` | Link text | `#764000` | `#FFC24D` |
 | `--color-link-hover` | Link hover and active | `#4A2800` | `#FFE0A3` |
 | `--color-focus` | Focus ring | `#17130C` | `#FFB51F` |
@@ -181,7 +181,7 @@ Headings use `--color-text`, not a tinted hue. Contrast takes priority over atmo
 
 ### Title band
 
-The top of every page (navbar plus title section: the homepage title, intro, and search; a recipe's title, meta, tags, and Favorite button; a tag or family page's title) sits on a full-bleed band, `.u-hero`. It's a `--color-surface` fill with a repeating wave line pattern in `--color-pattern`, reaching from the top of the page to both viewport edges. This is the one patterned surface on the site; nothing else gets a texture.
+The top of every page (navbar plus title section: the homepage title, intro, and search; a recipe's title, meta, tags, and Favorite button; a tag or family page's title) sits on a full-bleed band, `.u-hero`. It's a `--color-surface` fill with a tiled circles-and-diamonds line pattern in `--color-pattern`, reaching from the top of the page to both viewport edges. This is the one patterned surface on the site; nothing else gets a texture.
 
 - The pattern is a CSS mask filled with `--color-pattern`, so it follows the theme. Keep `--color-pattern` close to `--color-surface`: text crosses the lines. The light-mode link color dips to 6.4:1 where a line passes under it, which is accepted for this thin, decorative line only.
 - Chips on the band use a `--color-bg` fill instead of `--color-surface`, so they stay visible.
