@@ -10,6 +10,7 @@ import ShareButton from '@components/ShareButton.astro';
 import { contributorPath } from '@utils/contributorSlug';
 import { tagPath } from '@utils/tags';
 import { recipeDescription } from '@utils/recipeDescription';
+import { recipeTitleTransitionName } from '@utils/recipeTitleTransitionName';
 
 export async function getStaticPaths() {
   const recipes = await getCollection('recipes');
@@ -75,7 +76,8 @@ if (!recipe.isMock) {
 						<ShareButton slot="actions" title={recipe.data.title} />
 					</NavBar>
 				</div>
-				<h1 data-pagefind-meta="title">{recipe.data.title}</h1>
+				<!-- Shares a view-transition-name with this recipe's title in the lists, so it moves between them. -->
+				<h1 data-pagefind-meta="title" class="recipe-heading" style={`view-transition-name: ${recipeTitleTransitionName(recipe.id)}`}>{recipe.data.title}</h1>
 				<p class="u-label" data-pagefind-ignore>
 					{metaParts.map((part, i) => (
 						<Fragment>
@@ -240,6 +242,12 @@ if (!recipe.isMock) {
 </Layout>
 
 <style>
+	/* Hug the text, like the list title it animates from, so the box morphs between the two words
+	   rather than from a short link to the full column width. */
+	.recipe-heading {
+		inline-size: fit-content;
+	}
+
 	/* Same gap below the navbar as the page used to have before it moved into the header. */
 	.recipe-navbar {
 		margin-block-end: calc(var(--space-l) - var(--space-2xs));
