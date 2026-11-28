@@ -19,6 +19,9 @@
 
     html {
         scroll-behavior: smooth;
+        // Mobile Chrome flashes a translucent blue box over anything tapped, which tints the accent
+        // fills an off-palette green. Native apps don't; hover and focus-visible styles still apply.
+        -webkit-tap-highlight-color: transparent;
 
         @media (prefers-reduced-motion: reduce) {
             scroll-behavior: auto;
