@@ -20,6 +20,8 @@
         color: var(--color-text);
         background-color: var(--color-bg);
         -webkit-text-size-adjust: 100%;
+        // .u-hero bands bleed to the viewport edges with 100vw, which counts the scrollbar.
+        overflow-x: clip;
     }
 
     // Element display rules below (e.g. button) would otherwise beat the UA's [hidden].

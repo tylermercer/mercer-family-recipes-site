@@ -24,14 +24,16 @@ const { contributor, recipes } = Astro.props;
 	title={`${contributor}'s recipes`}
 	description={`Recipes from ${contributor} in the Mercer family cookbook.`}
 >
-	<main class="u-guttered l-stack l-space-xl">
-		<NavBar>
-			<nav>
-				<a href="/" role="button">&larr; Back to all recipes</a>
-			</nav>
-		</NavBar>
-		<section class="l-stack l-space-m">
-			<h1>{contributor}'s recipes</h1>
+	<main class="u-guttered l-stack l-space-l">
+		<header class="u-hero l-stack l-space-xl">
+			<NavBar>
+				<nav>
+					<a href="/" role="button">&larr; Back to all recipes</a>
+				</nav>
+			</NavBar>
+			<h1 id="page-heading">{contributor}'s recipes</h1>
+		</header>
+		<section aria-labelledby="page-heading">
 			<RecipeList recipes={recipes} showContributor={false} />
 		</section>
 	</main>

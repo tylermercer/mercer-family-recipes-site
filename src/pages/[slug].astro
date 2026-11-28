@@ -63,13 +63,16 @@ if (!recipe.isMock) {
 	details={details}
 >
 	<main class="u-guttered l-stack l-space-l">
-		<NavBar>
-			<nav class="u-hide-on-print">
-				<a href="/" role="button">&larr; All recipes</a>
-			</nav>
-		</NavBar>
 		<article class="l-stack l-space-m recipe-content" data-pagefind-body>
-			<header class="l-stack l-space-2xs">
+			<!-- The navbar lives in the article header so the title band can sit behind both. -->
+			<header class="u-hero l-stack l-space-2xs">
+				<div class="recipe-navbar" data-pagefind-ignore>
+					<NavBar>
+						<nav class="u-hide-on-print">
+							<a href="/" role="button">&larr; All recipes</a>
+						</nav>
+					</NavBar>
+				</div>
 				<h1 data-pagefind-meta="title">{recipe.data.title}</h1>
 				<p class="u-label" data-pagefind-ignore>
 					{metaParts.map((part, i) => (
@@ -217,6 +220,11 @@ if (!recipe.isMock) {
 </Layout>
 
 <style>
+	/* Same gap below the navbar as the page used to have before it moved into the header. */
+	.recipe-navbar {
+		margin-block-end: calc(var(--space-l) - var(--space-2xs));
+	}
+
 	.recipe-tools-row {
 		align-items: flex-start;
 		row-gap: 0;

@@ -25,14 +25,16 @@ const { tag, recipes } = Astro.props;
 	title={`Recipes tagged “${tag}”`}
 	description={`Mercer family recipes tagged #${tag}.`}
 >
-	<main class="u-guttered l-stack l-space-xl">
-		<NavBar>
-			<nav>
-				<a href="/" role="button">&larr; Back to all recipes</a>
-			</nav>
-		</NavBar>
-		<section class="l-stack l-space-m">
-			<h1>Recipes tagged “{tag}”</h1>
+	<main class="u-guttered l-stack l-space-l">
+		<header class="u-hero l-stack l-space-xl">
+			<NavBar>
+				<nav>
+					<a href="/" role="button">&larr; Back to all recipes</a>
+				</nav>
+			</NavBar>
+			<h1 id="page-heading">Recipes tagged “{tag}”</h1>
+		</header>
+		<section aria-labelledby="page-heading">
 			<RecipeList recipes={recipes} />
 		</section>
 	</main>
