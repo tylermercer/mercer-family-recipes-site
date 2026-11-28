@@ -2,8 +2,9 @@
 // Bundled to /sw.js by src/integrations/service-worker.ts after each build, and registered by
 // Base.astro in production only. Recipes stay readable in the kitchen when the connection drops:
 // the build output is fetched up front so cached pages render with their styles, fonts, and
-// scripts, and every page of the site is then saved in the background (see cacheAllPages), so a
-// recipe opens offline even if it's never been opened on this device.
+// scripts. In a browser tab, each page is kept once it's opened; in the installed app, every page of
+// the site is also saved in the background (see cacheAllPages), so a recipe opens offline even if
+// it's never been opened on this device.
 
 import {
 	CACHE_NAMES,
@@ -72,7 +73,8 @@ self.addEventListener('fetch', (event) => {
 	else if (strategy === 'network-first') event.respondWith(networkFirst(event));
 });
 
-// Pages ask for the save on each load (Base.astro); it returns at once when nothing has changed.
+// In the installed app, pages ask for the save on each load (Base.astro); it returns at once when
+// nothing has changed.
 // It's a message rather than part of install or activate, since waiting on up to ~100 fetches there
 // would hold up the worker taking over, and a message event keeps the worker alive until it's done.
 let savingAllPages: Promise<void> | null = null;
