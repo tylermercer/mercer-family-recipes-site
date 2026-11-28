@@ -151,14 +151,18 @@ if (!recipe.isMock) {
 		import { getSessionStorage, shouldNavigateBack } from '@utils/sessionEntry';
 
 		// Back to wherever the recipe was opened from (a tag page, a search, another recipe), like an
-		// app's back button. On the session's first page there's nothing of ours behind it, so the
-		// link to the homepage is followed instead.
-		document.querySelector<HTMLAnchorElement>('a[data-back-link]')?.addEventListener('click', (event) => {
-			if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-			if (!shouldNavigateBack(getSessionStorage(), location.pathname, history.length)) return;
-			event.preventDefault();
-			history.back();
-		});
+		// app's back button, and labeled "Back" since that may not be the homepage. On the session's
+		// first page there's nothing of ours behind it, so it stays a link to "All recipes".
+		const backLink = document.querySelector<HTMLAnchorElement>('a[data-back-link]');
+		if (backLink && shouldNavigateBack(getSessionStorage(), location.pathname, history.length)) {
+			backLink.textContent = '← Back';
+			backLink.addEventListener('click', (event) => {
+				// Modified clicks (new tab or window) still follow the link.
+				if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+				event.preventDefault();
+				history.back();
+			});
+		}
 	</script>
 
 	<script>
