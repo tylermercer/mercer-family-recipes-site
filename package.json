@@ -38,6 +38,7 @@
     "@types/turndown": "^5.0.6",
     "@types/word-extractor": "^1.0.6",
     "@vitest/coverage-v8": "^4.1.11",
+    "esbuild": "^0.28.2",
     "jsdom": "^30.0.1",
     "pagefind": "^1.6.0",
     "vitest": "^4.1.11",

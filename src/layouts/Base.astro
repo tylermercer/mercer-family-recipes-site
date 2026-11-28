@@ -19,9 +19,11 @@ interface Props {
 	 * (twitter:label1/data1, twitter:label2/data2), e.g. { From: 'Mom & Dad' }.
 	 */
 	details?: Record<string, string>;
+	/** Keep the page out of search engines, e.g. the offline fallback. */
+	noindex?: boolean;
 }
 
-const { title, description = DEFAULT_DESCRIPTION, ogType = 'website', modified, details = {} } = Astro.props;
+const { title, description = DEFAULT_DESCRIPTION, ogType = 'website', modified, details = {}, noindex = false } = Astro.props;
 const documentTitle = title ? `${title} · ${SITE_NAME}` : SITE_NAME;
 const ogTitle = title ?? SITE_NAME;
 const detailPairs = Object.entries(details).slice(0, 2);
@@ -55,6 +57,7 @@ const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 		<title>{documentTitle}</title>
 		<meta name="description" content={description} />
 		<link rel="canonical" href={pageUrl} />
+		{noindex && <meta name="robots" content="noindex" />}
 
 		<!-- Link previews (Slack, Discord, Mattermost, iMessage) read these. -->
 		<meta property="og:type" content={ogType} />
@@ -99,6 +102,30 @@ const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 	</head>
 	<body>
 		<slot />
+		{import.meta.env.DEV ? (
+			// In dev the worker would cache Vite's bundles and serve stale copies after a re-bundle,
+			// so don't register it, and clear out any worker and caches left from a production build.
+			<script is:inline>
+				if ('serviceWorker' in navigator) {
+					navigator.serviceWorker.getRegistrations().then(function (registrations) {
+						registrations.forEach(function (registration) { registration.unregister(); });
+					});
+					if ('caches' in window) {
+						caches.keys().then(function (keys) { keys.forEach(function (key) { caches.delete(key); }); });
+					}
+				}
+			</script>
+		) : (
+			// Offline support (src/service-worker.ts). Pages are network-first, so a new worker taking
+			// over doesn't need a reload; skipping it keeps checked-off ingredients in place.
+			<script is:inline>
+				if ('serviceWorker' in navigator) {
+					window.addEventListener('load', function () {
+						navigator.serviceWorker.register('/sw.js');
+					});
+				}
+			</script>
+		)}
 	</body>
 </html>
 
