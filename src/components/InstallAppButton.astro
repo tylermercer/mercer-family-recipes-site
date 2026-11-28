@@ -1,0 +1,50 @@
+---
+// "Install" button for the navbar. Hidden until the browser says the site can be installed
+// (beforeinstallprompt: Chrome and Edge, mostly Android; iOS Safari never fires it), then it opens
+// the browser's own install prompt. Gone again once the app is installed or when running as one.
+---
+
+<button id="install-app" type="button" class="install-app button-secondary" hidden>
+	<svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square" d="M12 3v12M6.5 9.5 12 15l5.5-5.5M4 20h16"/></svg>
+	Install
+</button>
+
+<script is:inline>
+	(function () {
+		var button = document.getElementById('install-app');
+		if (!button) return;
+		var deferred = null;
+
+		window.addEventListener('beforeinstallprompt', function (event) {
+			// Keep Chrome's one-time mini-infobar from showing; the button offers it instead, on every visit.
+			event.preventDefault();
+			deferred = event;
+			button.hidden = false;
+		});
+
+		button.addEventListener('click', function () {
+			if (!deferred) return;
+			var prompt = deferred;
+			deferred = null;
+			prompt.prompt();
+			prompt.userChoice.then(function () {
+				// Dismissed: Chrome fires beforeinstallprompt again later, which brings the button back.
+				button.hidden = true;
+			});
+		});
+
+		window.addEventListener('appinstalled', function () {
+			deferred = null;
+			button.hidden = true;
+		});
+	})();
+</script>
+
+<style>
+	/* Never inside the installed app, even if a browser fires the event there. */
+	@media (display-mode: standalone) {
+		.install-app {
+			display: none !important;
+		}
+	}
+</style>
