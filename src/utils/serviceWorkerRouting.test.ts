@@ -3,7 +3,9 @@ import {
 	cacheStrategyFor,
 	pageCacheKeys,
 	pagePathsFromBuild,
+	pagesToSave,
 	pageTitleFromDocumentTitle,
+	parseSavedPages,
 	stalePageUrls,
 	type RoutableRequest,
 } from '@utils/serviceWorkerRouting';
@@ -144,5 +146,55 @@ describe('stalePageUrls', () => {
 
 	it('ignores the query string when matching', () => {
 		expect(stalePageUrls([`${ORIGIN}/pumpkin-cookies/?scale=2`], pages)).toEqual([]);
+	});
+});
+
+describe('parseSavedPages', () => {
+	it('reads a saved-pages record', () => {
+		expect(parseSavedPages('{"/":"aaa","/pumpkin-cookies/":"bbb"}')).toEqual({ '/': 'aaa', '/pumpkin-cookies/': 'bbb' });
+	});
+
+	it('treats a missing record as nothing saved', () => {
+		expect(parseSavedPages(null)).toEqual({});
+		expect(parseSavedPages(undefined)).toEqual({});
+		expect(parseSavedPages('')).toEqual({});
+	});
+
+	it('treats unreadable JSON or the wrong shape as nothing saved', () => {
+		expect(parseSavedPages('{not json')).toEqual({});
+		expect(parseSavedPages('["/"]')).toEqual({});
+		expect(parseSavedPages('null')).toEqual({});
+		expect(parseSavedPages('"x"')).toEqual({});
+	});
+
+	it('drops entries whose hash is not a string', () => {
+		expect(parseSavedPages('{"/":"aaa","/x/":3,"/y/":null}')).toEqual({ '/': 'aaa' });
+	});
+});
+
+describe('pagesToSave', () => {
+	const built = { '/': 'h1', '/pumpkin-cookies/': 'p1', '/tags/dinner/': 't1' };
+	const allCached = new Set(Object.keys(built));
+
+	it('downloads everything the first time', () => {
+		expect(pagesToSave(built, {}, new Set())).toEqual(['/', '/pumpkin-cookies/', '/tags/dinner/']);
+	});
+
+	it('downloads nothing when every saved page is current', () => {
+		expect(pagesToSave(built, { ...built }, allCached)).toEqual([]);
+	});
+
+	it('downloads only the pages that changed or are new', () => {
+		const next = { ...built, '/': 'h2', '/new-recipe/': 'n1' };
+		expect(pagesToSave(next, built, allCached)).toEqual(['/', '/new-recipe/']);
+	});
+
+	it('downloads a page whose saved copy is gone from the cache', () => {
+		const cached = new Set(['/', '/tags/dinner/']);
+		expect(pagesToSave(built, built, cached)).toEqual(['/pumpkin-cookies/']);
+	});
+
+	it('ignores saved pages that are no longer built', () => {
+		expect(pagesToSave(built, { ...built, '/deleted/': 'd1' }, allCached)).toEqual([]);
 	});
 });

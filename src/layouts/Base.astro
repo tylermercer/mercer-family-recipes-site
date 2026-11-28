@@ -120,8 +120,8 @@ const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 		) : (
 			// Offline support (src/service-worker.ts). Pages are network-first, so a new worker taking
 			// over doesn't need a reload; skipping it keeps checked-off ingredients in place. Once a
-			// worker is running, it's asked to save every page for offline use (a no-op once they're
-			// saved), unless the browser's data saver is on.
+			// worker is running, it's asked to save every page for offline use (it downloads only pages
+			// that are new or changed since it last saved them), unless the browser's data saver is on.
 			<script is:inline>
 				if ('serviceWorker' in navigator) {
 					window.addEventListener('load', function () {
