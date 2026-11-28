@@ -18,12 +18,7 @@ const { title } = Astro.props;
 </button>
 
 <script>
-	const INSTALLED_APP = '(display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui)';
-
-	function isInstalledApp(): boolean {
-		// iOS before 16.4 doesn't match display-mode, but sets navigator.standalone.
-		return window.matchMedia(INSTALLED_APP).matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
-	}
+	import { isInstalledApp } from '@utils/appNavigation';
 
 	const isApple = /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
 

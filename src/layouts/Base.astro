@@ -139,5 +139,12 @@ const themeColors = { light: '#FFFDF7', dark: '#14110C' };
 	import { getSessionStorage, recordSessionEntry } from '@utils/sessionEntry';
 	// The first page of the session, so a recipe's back button knows whether there's a page to go back to.
 	recordSessionEntry(getSessionStorage(), location.pathname);
+
+	import { isInstalledApp, shouldSuppressLinkMenu } from '@utils/appNavigation';
+	// In the installed app, a long press on a navigation control ("← Back", tag and family chips)
+	// shouldn't open the browser's "Open in new tab / Copy link" menu. Content links keep it.
+	document.addEventListener('contextmenu', (event) => {
+		if (shouldSuppressLinkMenu(event.target, isInstalledApp())) event.preventDefault();
+	});
 </script>
 
