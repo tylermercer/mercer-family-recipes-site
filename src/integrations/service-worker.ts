@@ -4,14 +4,14 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { readdir, readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { pagePathsFromBuild } from '../utils/serviceWorkerRouting';
+import { pagePathsFromBuild, type PageHashes } from '../utils/serviceWorkerRouting';
 
 /**
  * Bundles the service worker (TypeScript, may import from src/) to /sw.js after each build. The
  * worker precaches the homepage, the offline page, and every file Astro wrote to /_astro/, so the
- * list is filled in here once the build output exists. It also gets every built page's path, which
- * it saves in the background so the whole cookbook opens offline, and a build id: a hash of those
- * pages' HTML, so a deploy that changes a page (and only that) makes the worker save them again.
+ * list is filled in here once the build output exists. It also gets every built page's path with a
+ * hash of its HTML; it saves the pages in the background so the whole cookbook opens offline, and
+ * on later deploys downloads only the pages whose hash changed.
  * Adapted from InnerHelm's integration.
  *
  * There's no dev-server route: Base.astro only registers the worker in production, since in dev
@@ -37,17 +37,16 @@ export default function serviceWorkerIntegration(options: { src: string }): Astr
 				}
 				const precacheUrls = ['/', '/offline/', ...astroFiles];
 
-				const pagePaths = pagePathsFromBuild(pages.map((page) => page.pathname));
-				const hash = createHash('sha256');
-				for (const path of pagePaths) {
-					hash.update(path);
+				const pageHashes: PageHashes = {};
+				for (const path of pagePathsFromBuild(pages.map((page) => page.pathname))) {
 					try {
-						hash.update(await readFile(join(outDir, path, 'index.html')));
+						const html = await readFile(join(outDir, path, 'index.html'));
+						pageHashes[path] = createHash('sha256').update(html).digest('hex').slice(0, 12);
 					} catch {
-						// Not written as path/index.html (e.g. an on-demand route); its path alone counts.
+						// Not written as path/index.html (e.g. an on-demand route), so not something to save.
 					}
 				}
-				const buildId = hash.digest('hex').slice(0, 16);
+				const pageCount = Object.keys(pageHashes).length;
 
 				await build({
 					entryPoints: [fileURLToPath(new URL(options.src, root))],
@@ -61,12 +60,11 @@ export default function serviceWorkerIntegration(options: { src: string }): Astr
 					tsconfig: fileURLToPath(new URL('./tsconfig.json', root)),
 					define: {
 						__PRECACHE_URLS__: JSON.stringify(precacheUrls),
-						__PAGE_PATHS__: JSON.stringify(pagePaths),
-						__BUILD_ID__: JSON.stringify(buildId),
+						__PAGE_HASHES__: JSON.stringify(pageHashes),
 					},
 				});
 				logger.info(
-					`Service worker written to sw.js, precaching ${precacheUrls.length} URLs and saving ${pagePaths.length} pages (build ${buildId}).`,
+					`Service worker written to sw.js, precaching ${precacheUrls.length} URLs and saving ${pageCount} pages.`,
 				);
 			},
 		},

@@ -6,21 +6,25 @@
 // recipe opens offline even if it's never been opened on this device.
 
 import {
-	ALL_PAGES_MARKER,
 	CACHE_NAMES,
+	SAVED_PAGES_KEY,
 	cacheStrategyFor,
 	pageCacheKeys,
+	pagesToSave,
+	parseSavedPages,
 	stalePageUrls,
+	type PageHashes,
 } from '@utils/serviceWorkerRouting';
 
 export type {};
 declare const self: ServiceWorkerGlobalScope;
 /** Filled in at build time: the homepage, the offline page, and every file under /_astro/. */
 declare const __PRECACHE_URLS__: string[];
-/** Filled in at build time: every built page's path, e.g. "/", "/pumpkin-cookies/", "/tags/dinner/". */
-declare const __PAGE_PATHS__: string[];
-/** Filled in at build time: a hash of every built page, which changes when any page does. */
-declare const __BUILD_ID__: string;
+/**
+ * Filled in at build time: every built page's path ("/", "/pumpkin-cookies/", "/tags/dinner/") with
+ * a hash of its HTML.
+ */
+declare const __PAGE_HASHES__: PageHashes;
 
 /** How many pages to fetch at once while saving them all. */
 const SAVE_CONCURRENCY = 4;
@@ -68,9 +72,9 @@ self.addEventListener('fetch', (event) => {
 	else if (strategy === 'network-first') event.respondWith(networkFirst(event));
 });
 
-// Pages ask for the full save on each load (Base.astro). It's a message rather than part of install
-// or activate, since waiting on ~100 fetches there would hold up the worker taking over, and a
-// message event keeps the worker alive until the save finishes.
+// Pages ask for the save on each load (Base.astro); it returns at once when nothing has changed.
+// It's a message rather than part of install or activate, since waiting on up to ~100 fetches there
+// would hold up the worker taking over, and a message event keeps the worker alive until it's done.
 let savingAllPages: Promise<void> | null = null;
 
 self.addEventListener('message', (event) => {
@@ -82,36 +86,45 @@ self.addEventListener('message', (event) => {
 });
 
 /**
- * Saves every page of this build into the pages cache, fresh from the network, and drops saved
- * pages that no longer exist. Pages are still network-first, so this only matters offline. Skipped
- * once a build's pages are all saved; a page that fails leaves the marker unset, so the next page
- * load tries again.
+ * Brings the pages cache up to date with this build: downloads, fresh from the network, each page
+ * that's new or changed since it was last saved (by its build-time hash), and drops saved pages
+ * that are no longer built. The first run saves every page; after a deploy that adds a recipe, only
+ * that recipe and the pages listing it. A page that fails to download isn't recorded, so the next
+ * page load retries it. Pages are still network-first, so this only matters offline.
  */
 async function cacheAllPages(): Promise<void> {
 	const meta = await caches.open(CACHE_NAMES.META);
-	if ((await (await meta.match(ALL_PAGES_MARKER))?.text()) === __BUILD_ID__) return;
-
 	const cache = await caches.open(CACHE_NAMES.PAGES);
-	const queue = [...__PAGE_PATHS__];
-	let failed = false;
+	const saved = parseSavedPages(await (await meta.match(SAVED_PAGES_KEY))?.text());
+	const cachedUrls = (await cache.keys()).map((request) => request.url);
+	const cachedPaths = new Set(cachedUrls.map((url) => new URL(url).pathname));
+	const stale = stalePageUrls(cachedUrls, Object.keys(__PAGE_HASHES__));
+	const queue = pagesToSave(__PAGE_HASHES__, saved, cachedPaths);
+	if (queue.length === 0 && stale.length === 0) return;
+
+	// Only pages that are still built and still in the cache keep their record.
+	const next: PageHashes = {};
+	for (const [path, hash] of Object.entries(saved)) {
+		if (__PAGE_HASHES__[path] && cachedPaths.has(path)) next[path] = hash;
+	}
+
 	const worker = async () => {
 		for (let path = queue.shift(); path !== undefined; path = queue.shift()) {
 			try {
 				// no-cache: revalidate with the server, so the HTTP cache can't hand back an old copy.
 				const response = await fetch(new Request(path, { cache: 'no-cache' }));
-				if (response.ok && !response.redirected) await cache.put(path, response);
-				else failed = true;
+				if (response.ok && !response.redirected) {
+					await cache.put(path, response);
+					next[path] = __PAGE_HASHES__[path];
+				}
 			} catch {
-				failed = true;
+				// Offline or a server error: left unrecorded, so the next page load tries again.
 			}
 		}
 	};
 	await Promise.all(Array.from({ length: SAVE_CONCURRENCY }, worker));
-
-	const cachedUrls = (await cache.keys()).map((request) => request.url);
-	await Promise.all(stalePageUrls(cachedUrls, __PAGE_PATHS__).map((url) => cache.delete(url)));
-
-	if (!failed) await meta.put(ALL_PAGES_MARKER, new Response(__BUILD_ID__));
+	await Promise.all(stale.map((url) => cache.delete(url)));
+	await meta.put(SAVED_PAGES_KEY, new Response(JSON.stringify(next), { headers: { 'Content-Type': 'application/json' } }));
 }
 
 function putInCache(event: FetchEvent, cacheName: string, response: Response): void {

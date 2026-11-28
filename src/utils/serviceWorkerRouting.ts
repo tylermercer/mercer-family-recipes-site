@@ -12,12 +12,18 @@ export const CACHE_NAMES = {
 	PRECACHE: 'precache-v1',
 	PAGES: 'pages-v1',
 	ASSETS: 'assets-v1',
-	/** Bookkeeping: which build's pages have all been saved (see ALL_PAGES_MARKER). */
+	/** Bookkeeping: which version of each page is saved (see SAVED_PAGES_KEY). */
 	META: 'meta-v1',
 } as const;
 
-/** Key in CACHE_NAMES.META whose body is the build id whose pages are all in CACHE_NAMES.PAGES. */
-export const ALL_PAGES_MARKER = '/__all-pages-saved__';
+/**
+ * Key in CACHE_NAMES.META whose body is a JSON SavedPages object: for each page the worker saved
+ * in the background, the content hash of the version it saved.
+ */
+export const SAVED_PAGES_KEY = '/__saved-pages__';
+
+/** Page path ("/pumpkin-cookies/") to a hash of its HTML. */
+export type PageHashes = Record<string, string>;
 
 export type CacheStrategy =
 	/** HTML pages: network first, falling back to the cached copy, then the offline page. */
@@ -105,4 +111,31 @@ export function pagePathsFromBuild(pathnames: string[]): string[] {
 export function stalePageUrls(cachedUrls: string[], pagePaths: string[]): string[] {
 	const current = new Set(pagePaths);
 	return cachedUrls.filter((url) => !current.has(new URL(url).pathname));
+}
+
+/** Reads the saved-pages record, treating a missing or unreadable one as nothing saved. */
+export function parseSavedPages(json: string | null | undefined): PageHashes {
+	if (!json) return {};
+	try {
+		const parsed: unknown = JSON.parse(json);
+		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+		const pages: PageHashes = {};
+		for (const [path, hash] of Object.entries(parsed)) {
+			if (typeof hash === 'string') pages[path] = hash;
+		}
+		return pages;
+	} catch {
+		return {};
+	}
+}
+
+/**
+ * The pages the worker needs to (re)download: ones whose built hash differs from the version it
+ * saved, ones it never saved, and ones whose saved copy is gone from the cache. Unchanged pages are
+ * skipped, so adding a recipe downloads only the pages that list it, not the whole site.
+ */
+export function pagesToSave(built: PageHashes, saved: PageHashes, cachedPaths: ReadonlySet<string>): string[] {
+	return Object.keys(built)
+		.filter((path) => saved[path] !== built[path] || !cachedPaths.has(path))
+		.sort();
 }
