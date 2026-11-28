@@ -3,11 +3,31 @@
 // Element defaults. See DESIGN.md: square corners, no shadows, borders only on
 // checkboxes and text inputs (plus the blockquote accent rule).
 @layer base {
+    // Page-to-page navigations keep the current page on screen until the next one is ready, then
+    // cross-fade, instead of flashing a blank page (Chrome, Safari 18.2+; others just navigate).
+    @view-transition {
+        navigation: auto;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        ::view-transition-group(*),
+        ::view-transition-old(*),
+        ::view-transition-new(*) {
+            animation: none !important;
+        }
+    }
+
     html {
         scroll-behavior: smooth;
 
         @media (prefers-reduced-motion: reduce) {
             scroll-behavior: auto;
+        }
+
+        // Installed app only: no rubber-band stretch at the page edges and no pull-to-refresh, as in
+        // a native app. In a browser tab both stay, since people expect them there.
+        @media (display-mode: standalone) {
+            overscroll-behavior: none;
         }
     }
 
@@ -22,6 +42,27 @@
         -webkit-text-size-adjust: 100%;
         // .u-hero bands bleed to the viewport edges with 100vw, which counts the scrollbar.
         overflow-x: clip;
+
+        @media (display-mode: standalone) {
+            overscroll-behavior: none;
+        }
+    }
+
+    // Controls and images aren't text to copy: a long press or a scroll that starts on one shouldn't
+    // begin a selection. Recipe text, ingredients included, stays selectable.
+    button,
+    a[role=button],
+    summary,
+    label,
+    img,
+    svg,
+    .u-chip {
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    img {
+        -webkit-user-drag: none;
     }
 
     // Element display rules below (e.g. button) would otherwise beat the UA's [hidden].
